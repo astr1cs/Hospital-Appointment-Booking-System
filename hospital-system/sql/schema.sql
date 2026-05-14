@@ -85,3 +85,37 @@ INSERT INTO specializations (name, description) VALUES
 ('Ophthalmology', 'Eye and vision care'),
 ('Psychiatry', 'Mental health and emotional well-being'),
 ('Gynecology', 'Women reproductive health');
+
+
+-- Create doctors table (if not exists)
+CREATE TABLE IF NOT EXISTS doctors (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    specialization_id INT,
+    bio TEXT,
+    consultation_fee DECIMAL(10,2) DEFAULT 0,
+    photo_path VARCHAR(255),
+    license_number VARCHAR(100),
+    experience_years INT DEFAULT 0,
+    is_approved TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (specialization_id) REFERENCES specializations(id) ON DELETE SET NULL,
+    INDEX idx_specialization (specialization_id),
+    INDEX idx_is_approved (is_approved)
+);
+
+-- Insert sample doctor (optional - for testing)
+-- Note: Password is 'doctor123' (will be hashed)
+INSERT INTO users (name, email, password_hash, phone, role, is_active) 
+SELECT 'Dr. John Smith', 'doctor@hospital.com', '$2y$12$5k2pYtKqHx5ZqQ5rL5cQOe5xL5qX5zY5w5v5u5t5s5r5q5p5o5n5m', '1234567890', 'doctor', 1
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'doctor@hospital.com');
+
+-- Insert into doctors table (corrected - removed ambiguous ON DUPLICATE KEY UPDATE)
+INSERT INTO doctors (user_id, specialization_id, bio, consultation_fee, license_number, experience_years, is_approved)
+SELECT u.id, 1, 'Experienced cardiologist with 10+ years of practice', 150.00, 'LIC123456', 10, 1
+FROM users u 
+WHERE u.email = 'doctor@hospital.com'
+AND NOT EXISTS (SELECT 1 FROM doctors d WHERE d.user_id = u.id);
