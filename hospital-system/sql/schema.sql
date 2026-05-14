@@ -330,3 +330,11 @@ VALUES
 -- Insert a test receptionist (password: receptionist123)
 INSERT INTO users (name, email, password_hash, phone, role, is_active) 
 VALUES ('Sarah Johnson', 'receptionist@hospital.com', '$2y$12$5k2pYtKqHx5ZqQ5rL5cQOe5xL5qX5zY5w5v5u5t5s5r5q5p5o5n5m', '5551112222', 'receptionist', 1);
+
+-- Insert a test patient
+INSERT INTO users (name, email, password_hash, phone, role, is_active) 
+VALUES ('John Doe', 'john@patient.com', '$2y$12$5k2pYtKqHx5ZqQ5rL5cQOe5xL5qX5zY5w5v5u5t5s5r5q5p5o5n5m', '5551234567', 'patient', 1);
+
+INSERT INTO patients (user_id, date_of_birth, blood_group, gender, address, emergency_contact_name, emergency_contact_phone) 
+SELECT id, '1990-05-15', 'O+', 'male', '123 Main St, City', 'Jane Doe', '5559876543'
+FROM users WHERE email = 'john@patient.com';
