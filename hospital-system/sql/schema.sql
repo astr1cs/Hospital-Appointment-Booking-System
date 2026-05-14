@@ -338,3 +338,41 @@ VALUES ('John Doe', 'john@patient.com', '$2y$12$5k2pYtKqHx5ZqQ5rL5cQOe5xL5qX5zY5
 INSERT INTO patients (user_id, date_of_birth, blood_group, gender, address, emergency_contact_name, emergency_contact_phone) 
 SELECT id, '1990-05-15', 'O+', 'male', '123 Main St, City', 'Jane Doe', '5559876543'
 FROM users WHERE email = 'john@patient.com';
+
+-- Create settings table
+CREATE TABLE IF NOT EXISTS settings (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    setting_key VARCHAR(100) UNIQUE NOT NULL,
+    setting_value TEXT,
+    setting_description TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert default settings
+INSERT INTO settings (setting_key, setting_value, setting_description) VALUES
+('cancellation_hours', '2', 'Minimum hours before appointment to allow cancellation'),
+('max_booking_days', '30', 'Maximum days in advance patients can book'),
+('default_consultation_fee', '50', 'Default consultation fee for doctors'),
+('hospital_name', 'City Hospital', 'Name of the hospital'),
+('hospital_phone', '+1234567890', 'Hospital contact number'),
+('hospital_email', 'info@cityhospital.com', 'Hospital email address'),
+('hospital_address', '123 Healthcare Ave, Medical District, City', 'Hospital physical address'),
+('working_hours_start', '09:00', 'Hospital working hours start'),
+('working_hours_end', '17:00', 'Hospital working hours end'),
+('timezone', 'Asia/Dhaka', 'System timezone')
+ON DUPLICATE KEY UPDATE setting_key = setting_key;
+
+-- Insert test billing records if none exist
+INSERT INTO billing (appointment_id, patient_id, amount, payment_status, created_at)
+SELECT a.id, a.patient_id, 150.00, 'pending', NOW()
+FROM appointments a
+WHERE NOT EXISTS (SELECT 1 FROM billing WHERE appointment_id = a.id)
+LIMIT 5;
+
+-- Insert some paid records
+INSERT INTO billing (appointment_id, patient_id, amount, payment_status, paid_at, created_at)
+SELECT a.id, a.patient_id, 200.00, 'paid', NOW(), DATE_SUB(NOW(), INTERVAL 5 DAY)
+FROM appointments a
+WHERE a.status = 'completed'
+AND NOT EXISTS (SELECT 1 FROM billing WHERE appointment_id = a.id AND payment_status = 'paid')
+LIMIT 3;

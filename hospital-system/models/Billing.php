@@ -6,13 +6,6 @@ class Billing {
         $this->db = Database::getInstance()->getConnection();
     }
     
-    // Get pending billings total amount
-    public function getPendingTotal() {
-        $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM billing WHERE payment_status = 'pending'";
-        $result = $this->db->query($sql);
-        return $result->fetch_assoc()['total'];
-    }
-    
     // Get all billing records
     public function getAll() {
         $sql = "SELECT b.*, u.name as patient_name, a.appointment_date, d.name as doctor_name
@@ -28,22 +21,58 @@ class Billing {
     public function getStats() {
         $stats = [];
         
-        $queries = [
-            'total_paid' => "SELECT COALESCE(SUM(amount), 0) as total FROM billing WHERE payment_status = 'paid'",
-            'total_pending' => "SELECT COALESCE(SUM(amount), 0) as total FROM billing WHERE payment_status = 'pending'",
-            'count_paid' => "SELECT COUNT(*) as count FROM billing WHERE payment_status = 'paid'",
-            'count_pending' => "SELECT COUNT(*) as count FROM billing WHERE payment_status = 'pending'"
-        ];
+        // Total paid amount
+        $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM billing WHERE payment_status = 'paid'";
+        $result = $this->db->query($sql);
+        $stats['total_paid'] = $result->fetch_assoc()['total'];
         
-        foreach ($queries as $key => $sql) {
-            $result = $this->db->query($sql);
-            $stats[$key] = $result->fetch_assoc()['total'] ?? 0;
-            if (strpos($key, 'count') !== false) {
-                $stats[$key] = $result->fetch_assoc()['count'] ?? 0;
-            }
-        }
+        // Total pending amount
+        $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM billing WHERE payment_status = 'pending'";
+        $result = $this->db->query($sql);
+        $stats['total_pending'] = $result->fetch_assoc()['total'];
+        
+        // Total revenue (paid only)
+        $stats['total_revenue'] = $stats['total_paid'];
+        
+        // Count paid transactions
+        $sql = "SELECT COUNT(*) as count FROM billing WHERE payment_status = 'paid'";
+        $result = $this->db->query($sql);
+        $stats['count_paid'] = $result->fetch_assoc()['count'];
+        
+        // Count pending transactions
+        $sql = "SELECT COUNT(*) as count FROM billing WHERE payment_status = 'pending'";
+        $result = $this->db->query($sql);
+        $stats['count_pending'] = $result->fetch_assoc()['count'];
         
         return $stats;
+    }
+    
+    // Get recent transactions
+    public function getRecent($limit = 10) {
+        $sql = "SELECT b.*, u.name as patient_name, a.appointment_date
+                FROM billing b
+                JOIN users u ON b.patient_id = u.id
+                LEFT JOIN appointments a ON b.appointment_id = a.id
+                ORDER BY b.created_at DESC
+                LIMIT ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        return $stmt->get_result();
+    }
+    
+    // Get pending bills
+    public function getPendingBills() {
+        $sql = "SELECT b.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
+                       a.appointment_date, d.name as doctor_name
+                FROM billing b
+                JOIN users u ON b.patient_id = u.id
+                JOIN appointments a ON b.appointment_id = a.id
+                JOIN users d ON a.doctor_id = d.id
+                WHERE b.payment_status = 'pending'
+                ORDER BY b.created_at DESC";
+        return $this->db->query($sql);
     }
     
     // Get revenue by period
@@ -72,6 +101,31 @@ class Billing {
                 ORDER BY period DESC
                 LIMIT 12";
         return $this->db->query($sql);
+    }
+    
+    // Get bill by ID
+    public function getById($id) {
+        $sql = "SELECT b.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
+                       a.appointment_date, a.appointment_time, a.reason,
+                       d.name as doctor_name
+                FROM billing b
+                JOIN users u ON b.patient_id = u.id
+                JOIN appointments a ON b.appointment_id = a.id
+                JOIN users d ON a.doctor_id = d.id
+                WHERE b.id = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    // Mark bill as paid
+    public function markAsPaid($id) {
+        $sql = "UPDATE billing SET payment_status = 'paid', paid_at = NOW() WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
     }
 }
 ?>
