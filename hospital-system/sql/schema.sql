@@ -326,3 +326,7 @@ INSERT INTO announcements (author_id, title, body, target_role)
 VALUES 
 (2, 'Welcome to Our Hospital', 'We are pleased to announce our new online booking system.', 'all'),
 (2, 'Special Health Camp', 'Free health checkup camp on Sunday.', 'patient');
+
+-- Insert a test receptionist (password: receptionist123)
+INSERT INTO users (name, email, password_hash, phone, role, is_active) 
+VALUES ('Sarah Johnson', 'receptionist@hospital.com', '$2y$12$5k2pYtKqHx5ZqQ5rL5cQOe5xL5qX5zY5w5v5u5t5s5r5q5p5o5n5m', '5551112222', 'receptionist', 1);
