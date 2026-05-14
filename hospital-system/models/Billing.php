@@ -261,7 +261,12 @@ public function getRevenueBySpecialization($startDate = null, $endDate = null) {
     
     return $this->db->query($sql);
 }
-
+// Get pending billings total amount
+public function getPendingTotal() {
+    $sql = "SELECT COALESCE(SUM(amount), 0) as total FROM billing WHERE payment_status = 'pending'";
+    $result = $this->db->query($sql);
+    return $result->fetch_assoc()['total'];
+}
 
 }
 ?>
