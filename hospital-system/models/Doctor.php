@@ -125,5 +125,40 @@ class Doctor {
         $result = $this->db->query($sql);
         return $result->fetch_assoc();
     }
+
+    // Get active doctors count
+public function getActiveCount() {
+    $sql = "SELECT COUNT(*) as count 
+            FROM doctors d
+            JOIN users u ON d.user_id = u.id
+            WHERE u.role = 'doctor' AND u.is_active = 1 AND d.is_approved = 1";
+    
+    $result = $this->db->query($sql);
+    return $result->fetch_assoc()['count'];
+}
+
+// Get pending doctors count
+public function getPendingCount() {
+    $sql = "SELECT COUNT(*) as count 
+            FROM doctors d
+            JOIN users u ON d.user_id = u.id
+            WHERE u.role = 'doctor' AND d.is_approved = 0";
+    
+    $result = $this->db->query($sql);
+    return $result->fetch_assoc()['count'];
+}
+
+// Get pending doctors list
+public function getPending() {
+    $sql = "SELECT u.*, d.*, s.name as specialization_name 
+            FROM users u 
+            INNER JOIN doctors d ON u.id = d.user_id 
+            LEFT JOIN specializations s ON d.specialization_id = s.id 
+            WHERE u.role = 'doctor' AND d.is_approved = 0 
+            ORDER BY u.created_at ASC";
+    
+    return $this->db->query($sql);
+}
+
 }
 ?>
