@@ -65,3 +65,23 @@ CREATE TABLE user_sessions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_user_id (user_id)
 );
+
+-- Create specializations table
+CREATE TABLE IF NOT EXISTS specializations (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert some sample data
+INSERT INTO specializations (name, description) VALUES
+('Cardiology', 'Heart and cardiovascular system specialist'),
+('Dermatology', 'Skin, hair, and nail conditions'),
+('Neurology', 'Brain and nervous system disorders'),
+('Pediatrics', 'Medical care for infants, children, and adolescents'),
+('Orthopedics', 'Bones, joints, ligaments, tendons, and muscles'),
+('Ophthalmology', 'Eye and vision care'),
+('Psychiatry', 'Mental health and emotional well-being'),
+('Gynecology', 'Women reproductive health');
