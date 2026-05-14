@@ -376,3 +376,17 @@ FROM appointments a
 WHERE a.status = 'completed'
 AND NOT EXISTS (SELECT 1 FROM billing WHERE appointment_id = a.id AND payment_status = 'paid')
 LIMIT 3;
+
+
+CREATE TABLE IF NOT EXISTS announcements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    author_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    body TEXT NOT NULL,
+    target_role ENUM('all', 'patient', 'doctor', 'receptionist') DEFAULT 'all',
+    published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_target (target_role),
+    INDEX idx_published (published_at)
+);
