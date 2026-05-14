@@ -1,0 +1,52 @@
+/* ========================================
+   RESPONSIVE STYLES
+   ======================================== */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .login-container,
+    .signup-container {
+        padding: 25px;
+        margin: 20px;
+    }
+    
+    .login-container {
+        max-width: 90%;
+    }
+    
+    .signup-container {
+        max-width: 95%;
+        padding: 25px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 10px 12px;
+    }
+    
+    fieldset {
+        padding: 15px;
+    }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+    .login-container,
+    .signup-container {
+        padding: 20px;
+    }
+    
+    .login-header h2,
+    .signup-header h2 {
+        font-size: 22px;
+    }
+    
+    .form-group label {
+        font-size: 13px;
+    }
+    
+    .btn-primary {
+        padding: 10px;
+    }
+}
