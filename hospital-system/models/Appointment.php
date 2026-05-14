@@ -37,7 +37,10 @@ class Appointment {
     public function getAll($filters = []) {
         $sql = "SELECT a.*, 
                 p.name as patient_name, 
+                p.email as patient_email,
+                p.phone as patient_phone,
                 d.name as doctor_name,
+                d.email as doctor_email,
                 doc.specialization_id,
                 s.name as specialization_name
                 FROM appointments a
@@ -74,7 +77,13 @@ class Appointment {
             $types .= "s";
         }
         
-        $sql .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC LIMIT 50";
+        if (!empty($filters['booking_source'])) {
+            $sql .= " AND a.booked_by = ?";
+            $params[] = $filters['booking_source'];
+            $types .= "s";
+        }
+        
+        $sql .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC";
         
         $stmt = $this->db->prepare($sql);
         if (!empty($params)) {
@@ -82,6 +91,81 @@ class Appointment {
         }
         $stmt->execute();
         return $stmt->get_result();
+    }
+    
+    // Get appointment by ID
+    public function getById($id) {
+        $sql = "SELECT a.*, 
+                p.name as patient_name, 
+                p.email as patient_email,
+                p.phone as patient_phone,
+                d.name as doctor_name,
+                d.email as doctor_email,
+                doc.specialization_id,
+                s.name as specialization_name
+                FROM appointments a
+                JOIN users p ON a.patient_id = p.id
+                JOIN users d ON a.doctor_id = d.id
+                JOIN doctors doc ON d.id = doc.user_id
+                JOIN specializations s ON doc.specialization_id = s.id
+                WHERE a.id = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    // Get all doctors for filter dropdown
+    public function getAllDoctors() {
+        $sql = "SELECT u.id, u.name 
+                FROM users u 
+                JOIN doctors d ON u.id = d.user_id 
+                WHERE u.role = 'doctor' AND u.is_active = 1 AND d.is_approved = 1
+                ORDER BY u.name";
+        
+        return $this->db->query($sql);
+    }
+    
+    // Get appointment statistics
+    public function getStats($filters = []) {
+        $sql = "SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                    SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
+                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
+                    SUM(CASE WHEN status = 'no_show' THEN 1 ELSE 0 END) as no_show
+                FROM appointments a
+                WHERE 1=1";
+        
+        $params = [];
+        $types = "";
+        
+        if (!empty($filters['doctor_id'])) {
+            $sql .= " AND a.doctor_id = ?";
+            $params[] = $filters['doctor_id'];
+            $types .= "i";
+        }
+        
+        if (!empty($filters['date_from'])) {
+            $sql .= " AND a.appointment_date >= ?";
+            $params[] = $filters['date_from'];
+            $types .= "s";
+        }
+        
+        if (!empty($filters['date_to'])) {
+            $sql .= " AND a.appointment_date <= ?";
+            $params[] = $filters['date_to'];
+            $types .= "s";
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        if (!empty($params)) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
     }
 }
 ?>
