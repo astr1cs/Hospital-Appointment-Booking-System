@@ -1,0 +1,10 @@
+/* assets/css/style.css - Master CSS file */
+
+/* Core */
+@import url('main.css');
+@import url('components.css');
+@import url('responsive.css');
+
+/* Page specific (load as needed in HTML) */
+/* @import url('login.css'); */  /* Load separately in login.php */
+/* @import url('signup.css'); */ /* Load separately in signup.php */
