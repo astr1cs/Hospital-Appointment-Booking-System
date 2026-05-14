@@ -1,31 +1,29 @@
-<?php
-// dashboard.php
+﻿<?php
 require_once 'includes/init.php';
 SessionManager::start();
 
-// Check if user is logged in
 if (!SessionManager::isLoggedIn()) {
-    redirect('login.php');
+    header('Location: login.php');
+    exit();
 }
 
 $role = SessionManager::getUserRole();
 
-// Redirect based on role
 switch ($role) {
     case 'patient':
-        redirect('patient/dashboard.php');
+        header('Location: patient/dashboard.php');
         break;
     case 'doctor':
-        redirect('doctor/dashboard.php');
+        header('Location: doctor/dashboard.php');
         break;
     case 'receptionist':
-        redirect('receptionist/dashboard.php');
+        header('Location: receptionist/dashboard.php');
         break;
     case 'admin':
-        redirect('admin/dashboard.php');
+        header('Location: admin.php?action=dashboard');
         break;
     default:
-        redirect('login.php');
+        header('Location: login.php');
         break;
 }
-?>
+exit();
