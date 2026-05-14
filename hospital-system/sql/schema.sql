@@ -391,4 +391,28 @@ CREATE TABLE IF NOT EXISTS announcements (
     INDEX idx_published (published_at)
 );
 
+CREATE TABLE IF NOT EXISTS complaints (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    patient_id INT NOT NULL,
+    appointment_id INT NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status ENUM('pending', 'resolved', 'rejected') DEFAULT 'pending',
+    admin_response TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP NULL,
+    
+    FOREIGN KEY (patient_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+    INDEX idx_status (status),
+    INDEX idx_patient (patient_id)
+);
 
+-- Insert sample complaints for testing
+INSERT INTO complaints (patient_id, subject, message, status) 
+SELECT id, 'Long waiting time', 'I had to wait over 2 hours for my appointment.', 'pending'
+FROM users WHERE role = 'patient' LIMIT 1;
+
+INSERT INTO complaints (patient_id, subject, message, status) 
+SELECT id, 'Unclear billing', 'The consultation fee was different from what was shown online.', 'pending'
+FROM users WHERE role = 'patient' LIMIT 1;
