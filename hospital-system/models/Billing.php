@@ -127,5 +127,141 @@ class Billing {
         $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
+
+    // Get revenue report by period
+public function getRevenueReport($period = 'month', $startDate = null, $endDate = null) {
+    switch($period) {
+        case 'day':
+            $groupBy = "DATE(b.created_at)";
+            $dateFormat = '%Y-%m-%d';
+            break;
+        case 'week':
+            $groupBy = "YEARWEEK(b.created_at)";
+            $dateFormat = '%Y Week %v';
+            break;
+        case 'month':
+            $groupBy = "DATE_FORMAT(b.created_at, '%Y-%m')";
+            $dateFormat = '%Y-%m';
+            break;
+        default:
+            $groupBy = "DATE_FORMAT(b.created_at, '%Y-%m')";
+            $dateFormat = '%Y-%m';
+    }
+    
+    $sql = "SELECT 
+                {$groupBy} as period,
+                DATE_FORMAT(b.created_at, '{$dateFormat}') as period_label,
+                COUNT(b.id) as invoice_count,
+                COALESCE(SUM(b.amount), 0) as total_revenue
+            FROM billing b
+            WHERE b.payment_status = 'paid'";
+    
+    if ($startDate) {
+        $sql .= " AND b.created_at >= ?";
+    }
+    if ($endDate) {
+        $sql .= " AND b.created_at <= ?";
+    }
+    
+    $sql .= " GROUP BY period ORDER BY period DESC";
+    
+    $stmt = $this->db->prepare($sql);
+    if ($startDate && $endDate) {
+        $stmt->bind_param("ss", $startDate, $endDate);
+    } elseif ($startDate) {
+        $stmt->bind_param("s", $startDate);
+    } elseif ($endDate) {
+        $stmt->bind_param("s", $endDate);
+    }
+    
+    if ($startDate || $endDate) {
+        $stmt->execute();
+        return $stmt->get_result();
+    }
+    
+    return $this->db->query($sql);
+}
+
+// Get revenue by doctor
+public function getRevenueByDoctor($startDate = null, $endDate = null) {
+    $sql = "SELECT 
+                d.name as doctor_name,
+                s.name as specialization_name,
+                COUNT(b.id) as invoice_count,
+                COALESCE(SUM(b.amount), 0) as total_revenue
+            FROM billing b
+            JOIN appointments a ON b.appointment_id = a.id
+            JOIN users d ON a.doctor_id = d.id
+            JOIN doctors doc ON d.id = doc.user_id
+            JOIN specializations s ON doc.specialization_id = s.id
+            WHERE b.payment_status = 'paid'";
+    
+    if ($startDate) {
+        $sql .= " AND b.created_at >= ?";
+    }
+    if ($endDate) {
+        $sql .= " AND b.created_at <= ?";
+    }
+    
+    $sql .= " GROUP BY a.doctor_id ORDER BY total_revenue DESC";
+    
+    $stmt = $this->db->prepare($sql);
+    if ($startDate && $endDate) {
+        $stmt->bind_param("ss", $startDate, $endDate);
+        $stmt->execute();
+        return $stmt->get_result();
+    } elseif ($startDate) {
+        $stmt->bind_param("s", $startDate);
+        $stmt->execute();
+        return $stmt->get_result();
+    } elseif ($endDate) {
+        $stmt->bind_param("s", $endDate);
+        $stmt->execute();
+        return $stmt->get_result();
+    }
+    
+    return $this->db->query($sql);
+}
+
+// Get revenue by specialization
+public function getRevenueBySpecialization($startDate = null, $endDate = null) {
+    $sql = "SELECT 
+                s.name as specialization_name,
+                COUNT(b.id) as invoice_count,
+                COALESCE(SUM(b.amount), 0) as total_revenue
+            FROM billing b
+            JOIN appointments a ON b.appointment_id = a.id
+            JOIN doctors doc ON a.doctor_id = doc.user_id
+            JOIN specializations s ON doc.specialization_id = s.id
+            WHERE b.payment_status = 'paid'";
+    
+    if ($startDate) {
+        $sql .= " AND b.created_at >= ?";
+    }
+    if ($endDate) {
+        $sql .= " AND b.created_at <= ?";
+    }
+    
+    $sql .= " GROUP BY doc.specialization_id ORDER BY total_revenue DESC";
+    
+    $stmt = $this->db->prepare($sql);
+    if ($startDate && $endDate) {
+        $stmt->bind_param("ss", $startDate, $endDate);
+        $stmt->execute();
+        return $stmt->get_result();
+    } elseif ($startDate) {
+        $stmt->bind_param("s", $startDate);
+        $stmt->execute();
+        return $stmt->get_result();
+    } elseif ($endDate) {
+        $stmt->bind_param("s", $endDate);
+        $stmt->execute();
+        return $stmt->get_result();
+    }
+    
+    return $this->db->query($sql);
+}
+
+
 }
 ?>

@@ -167,5 +167,64 @@ class Appointment {
         $stmt->execute();
         return $stmt->get_result()->fetch_assoc();
     }
+
+
+    // Get appointment volume report
+public function getVolumeReport() {
+    $sql = "SELECT 
+                d.name as doctor_name,
+                s.name as specialization_name,
+                COUNT(a.id) as total_appointments,
+                SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN a.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
+                SUM(CASE WHEN a.status = 'no_show' THEN 1 ELSE 0 END) as no_show,
+                ROUND(SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) * 100.0 / COUNT(a.id), 2) as completion_rate
+            FROM appointments a
+            JOIN users d ON a.doctor_id = d.id
+            JOIN doctors doc ON d.id = doc.user_id
+            JOIN specializations s ON doc.specialization_id = s.id
+            GROUP BY a.doctor_id
+            ORDER BY total_appointments DESC";
+    return $this->db->query($sql);
+}
+
+// Get peak hours report
+public function getPeakHoursReport() {
+    $sql = "SELECT 
+                HOUR(appointment_time) as hour,
+                COUNT(*) as appointment_count
+            FROM appointments
+            GROUP BY HOUR(appointment_time)
+            ORDER BY appointment_count DESC";
+    return $this->db->query($sql);
+}
+
+// Get peak days report
+public function getPeakDaysReport() {
+    $sql = "SELECT 
+                DAYNAME(appointment_date) as day_name,
+                COUNT(*) as appointment_count
+            FROM appointments
+            GROUP BY DAYNAME(appointment_date)
+            ORDER BY FIELD(DAYNAME(appointment_date), 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')";
+    return $this->db->query($sql);
+}
+
+// Get most in-demand specializations
+public function getTopSpecializations($limit = 5) {
+    $sql = "SELECT 
+                s.name as specialization_name,
+                COUNT(a.id) as appointment_count
+            FROM appointments a
+            JOIN doctors doc ON a.doctor_id = doc.user_id
+            JOIN specializations s ON doc.specialization_id = s.id
+            GROUP BY doc.specialization_id
+            ORDER BY appointment_count DESC
+            LIMIT ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("i", $limit);
+    $stmt->execute();
+    return $stmt->get_result();
+}
 }
 ?>
