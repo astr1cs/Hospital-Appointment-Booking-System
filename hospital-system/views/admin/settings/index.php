@@ -1,5 +1,5 @@
 ﻿<div class="page-header">
-    <h1 class="page-title">Billing Dashboard</h1>
+    <h1 class="page-title">Global Appointment Policies</h1>
 </div>
 
 <?php if (isset($success) && $success): ?>
@@ -10,118 +10,74 @@
     <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
 <?php endif; ?>
 
-<!-- Statistics Cards -->
-<div class="stats-row">
-    <div class="stat-card">
-        <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
-        <div class="stat-info">
-            <h3>$<?php echo number_format($stats['total_revenue'], 2); ?></h3>
-            <p>Total Revenue</p>
-        </div>
+<div class="settings-card">
+    <div class="card-header">
+        <h3><i class="fas fa-calendar-alt"></i> Appointment Policies</h3>
+        <p class="card-desc">Configure global appointment rules and limits</p>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-        <div class="stat-info">
-            <h3>$<?php echo number_format($stats['total_paid'], 2); ?></h3>
-            <p>Paid Amount</p>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon"><i class="fas fa-clock"></i></div>
-        <div class="stat-info">
-            <h3>$<?php echo number_format($stats['total_pending'], 2); ?></h3>
-            <p>Pending Amount</p>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-        <div class="stat-info">
-            <h3><?php echo $stats['count_paid']; ?></h3>
-            <p>Paid Transactions</p>
-        </div>
+    <div class="card-body">
+        <form method="POST" action="<?php echo SITE_URL; ?>admin.php?action=settings&sub=updatePolicies">
+            <div class="form-group">
+                <label>Minimum Cancellation Notice Period</label>
+                <div class="input-group">
+                    <input type="number" name="cancellation_hours" 
+                           class="form-control" 
+                           value="<?php echo $policies['cancellation_hours']; ?>"
+                           min="1" max="72" required>
+                    <span class="input-suffix">hours</span>
+                </div>
+                <small>Patients cannot cancel appointments within this many hours before the appointment time.</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Maximum Advance Booking Window</label>
+                <div class="input-group">
+                    <input type="number" name="max_booking_days" 
+                           class="form-control" 
+                           value="<?php echo $policies['max_booking_days']; ?>"
+                           min="1" max="365" required>
+                    <span class="input-suffix">days</span>
+                </div>
+                <small>Patients can book appointments up to this many days in advance.</small>
+            </div>
+            
+            <div class="form-group">
+                <label>Default Consultation Fee</label>
+                <div class="input-group">
+                    <span class="input-prefix">$</span>
+                    <input type="number" name="default_consultation_fee" 
+                           class="form-control" 
+                           value="<?php echo $policies['default_consultation_fee']; ?>"
+                           min="0" step="0.01" required>
+                </div>
+                <small>Default fee for doctors who don't set their own consultation fee.</small>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-save"></i> Save Policies
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-<div class="billing-grid">
-    <!-- Pending Bills Section -->
-    <div class="admin-card">
-        <div class="card-header">
-            <h3><i class="fas fa-hourglass-half"></i> Pending Bills</h3>
-            <span class="badge"><?php echo $pendingBills->num_rows; ?> pending</span>
-        </div>
-        <div class="card-body">
-            <?php if ($pendingBills->num_rows > 0): ?>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Patient</th>
-                            <th>Doctor</th>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while($row = $pendingBills->fetch_assoc()): ?>
-                        <tr>
-                            <td>
-                                <strong><?php echo htmlspecialchars($row['patient_name']); ?></strong><br>
-                                <small><?php echo htmlspecialchars($row['patient_email']); ?></small>
-                            </td>
-                            <td><?php echo htmlspecialchars($row['doctor_name']); ?></td>
-                            <td><?php echo date('M d, Y', strtotime($row['appointment_date'])); ?></td>
-                            <td class="amount">$<?php echo number_format($row['amount'], 2); ?></td>
-                            <td>
-                                <a href="<?php echo SITE_URL; ?>admin.php?action=billing&sub=markPaid&id=<?php echo $row['id']; ?>" 
-                                   class="btn-sm btn-success" 
-                                   onclick="return confirm('Mark this bill as paid?')">
-                                    <i class="fas fa-check"></i> Mark Paid
-                                </a>
-                            </td>
-                        </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <p class="text-muted">No pending bills.</p>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Recent Transactions -->
-    <div class="admin-card">
-        <div class="card-header">
-            <h3><i class="fas fa-history"></i> Recent Transactions</h3>
-        </div>
-        <div class="card-body">
-            <?php if ($recentTransactions->num_rows > 0): ?>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Patient</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while($row = $recentTransactions->fetch_assoc()): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($row['patient_name']); ?></td>
-                            <td class="amount">$<?php echo number_format($row['amount'], 2); ?></td>
-                            <td>
-                                <span class="status-badge status-<?php echo $row['payment_status']; ?>">
-                                    <?php echo ucfirst($row['payment_status']); ?>
-                                </span>
-                            </td>
-                            <td><?php echo date('M d, Y', strtotime($row['created_at'])); ?></td>
-                        </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-                </table>
-            <?php else: ?>
-                <p class="text-muted">No transactions found.</p>
-            <?php endif; ?>
+<div class="current-settings">
+    <div class="summary-card">
+        <h4><i class="fas fa-info-circle"></i> Current Settings</h4>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <span class="summary-label">Cancellation Notice:</span>
+                <span class="summary-value"><?php echo $policies['cancellation_hours']; ?> hours</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Max Booking Window:</span>
+                <span class="summary-value"><?php echo $policies['max_booking_days']; ?> days</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Default Fee:</span>
+                <span class="summary-value">$<?php echo number_format($policies['default_consultation_fee'], 2); ?></span>
+            </div>
         </div>
     </div>
 </div>
@@ -140,149 +96,154 @@
     color: #333;
 }
 
-.stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 25px;
-    margin-bottom: 30px;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.stat-icon i {
-    font-size: 28px;
-    color: white;
-}
-
-.stat-info h3 {
-    font-size: 24px;
-    margin: 0 0 5px 0;
-}
-
-.stat-info p {
-    color: #666;
-    margin: 0;
-    font-size: 13px;
-}
-
-.billing-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 25px;
-}
-
-.admin-card {
+.settings-card {
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     overflow: hidden;
+    max-width: 600px;
+    margin-bottom: 25px;
 }
 
 .card-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
 }
 
 .card-header h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+}
+
+.card-desc {
     margin: 0;
-    font-size: 16px;
+    font-size: 12px;
+    opacity: 0.9;
 }
 
 .card-body {
-    padding: 20px;
+    padding: 25px;
 }
 
-.data-table {
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.form-control {
     width: 100%;
-    border-collapse: collapse;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
 }
 
-.data-table th,
-.data-table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-    font-size: 13px;
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.data-table th {
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.input-group .form-control {
+    flex: 1;
+}
+
+.input-prefix {
     background: #f8f9fa;
-    font-weight: 600;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-weight: 500;
 }
 
-.amount {
-    font-weight: 600;
-    color: #28a745;
+.input-suffix {
+    color: #666;
+    font-size: 14px;
 }
 
-.badge {
-    background: #e9ecef;
-    color: #495057;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-}
-
-.status-badge {
-    padding: 4px 10px;
-    border-radius: 20px;
+small {
+    display: block;
+    margin-top: 5px;
     font-size: 11px;
-    display: inline-block;
+    color: #666;
 }
 
-.status-paid {
-    background: #d4edda;
-    color: #155724;
+.form-actions {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
 }
 
-.status-pending {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.btn-sm {
-    padding: 5px 12px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-size: 11px;
-    display: inline-block;
-}
-
-.btn-success {
-    background: #28a745;
+.btn-submit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.btn-success:hover {
-    background: #218838;
-    color: white;
+.btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
 
-.text-muted {
-    text-align: center;
+.current-settings {
+    max-width: 600px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
     padding: 20px;
-    color: #999;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.summary-card h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.summary-label {
+    font-size: 11px;
+    color: #666;
+}
+
+.summary-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #667eea;
 }
 
 .alert {
@@ -303,19 +264,10 @@
     border-left: 4px solid #dc3545;
 }
 
-@media (max-width: 1024px) {
-    .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .billing-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 @media (max-width: 768px) {
-    .stats-row {
+    .summary-grid {
         grid-template-columns: 1fr;
+        gap: 10px;
     }
 }
 </style>

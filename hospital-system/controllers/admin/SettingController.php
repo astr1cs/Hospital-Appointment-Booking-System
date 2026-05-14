@@ -1,24 +1,18 @@
 ﻿<?php
 require_once __DIR__ . '/BaseController.php';
-require_once __DIR__ . '/../../models/Billing.php';
+require_once __DIR__ . '/../../models/Setting.php';
 
-class BillingController extends BaseController {
+class SettingController extends BaseController {
     
-    // Billing dashboard
+    // Show settings page
     public function index() {
-        $billingModel = new Billing();
+        $settingModel = new Setting();
         
-        $stats = $billingModel->getStats();
-        $recentTransactions = $billingModel->getRecent(10);
-        $pendingBills = $billingModel->getPendingBills();
-        $revenueData = $billingModel->getRevenueByPeriod('month');
+        $policies = $settingModel->getPolicies();
         
         $data = [
-            'title' => 'Billing Dashboard',
-            'stats' => $stats,
-            'recentTransactions' => $recentTransactions,
-            'pendingBills' => $pendingBills,
-            'revenueData' => $revenueData,
+            'title' => 'Global Appointment Policies',
+            'policies' => $policies,
             'success' => $_SESSION['success'] ?? null,
             'error' => $_SESSION['error'] ?? null
         ];
@@ -26,56 +20,58 @@ class BillingController extends BaseController {
         unset($_SESSION['success']);
         unset($_SESSION['error']);
         
-        $this->view('billing/index', $data);
+        $this->view('settings/index', $data);
     }
     
-    // View bill details
-    public function view($id) {
-        $billingModel = new Billing();
-        
-        $sql = "SELECT b.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
-                       a.appointment_date, a.appointment_time, a.reason,
-                       d.name as doctor_name, doc.specialization_id, s.name as specialization_name
-                FROM billing b
-                JOIN users u ON b.patient_id = u.id
-                JOIN appointments a ON b.appointment_id = a.id
-                JOIN users d ON a.doctor_id = d.id
-                JOIN doctors doc ON d.id = doc.user_id
-                JOIN specializations s ON doc.specialization_id = s.id
-                WHERE b.id = ?";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $bill = $stmt->get_result()->fetch_assoc();
-        
-        if (!$bill) {
-            $_SESSION['error'] = 'Bill not found';
-            $this->redirect('admin.php?action=billing');
+    // Update policies
+    public function updatePolicies() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('admin.php?action=settings');
             return;
         }
         
-        $data = [
-            'title' => 'Bill Details',
-            'bill' => $bill
+        $settingModel = new Setting();
+        
+        $policies = [
+            'cancellation_hours' => $_POST['cancellation_hours'] ?? 2,
+            'max_booking_days' => $_POST['max_booking_days'] ?? 30,
+            'default_consultation_fee' => $_POST['default_consultation_fee'] ?? 50
         ];
         
-        $this->view('billing/view', $data);
-    }
-    
-    // Mark bill as paid
-    public function markPaid($id) {
-        $sql = "UPDATE billing SET payment_status = 'paid', paid_at = NOW() WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        
-        if ($stmt->execute()) {
-            $_SESSION['success'] = 'Bill marked as paid successfully';
-        } else {
-            $_SESSION['error'] = 'Failed to update bill';
+        // Validate
+        if ($policies['cancellation_hours'] < 1 || $policies['cancellation_hours'] > 72) {
+            $_SESSION['error'] = 'Cancellation hours must be between 1 and 72';
+            $this->redirect('admin.php?action=settings');
+            return;
         }
         
-        $this->redirect('admin.php?action=billing');
+        if ($policies['max_booking_days'] < 1 || $policies['max_booking_days'] > 365) {
+            $_SESSION['error'] = 'Max booking days must be between 1 and 365';
+            $this->redirect('admin.php?action=settings');
+            return;
+        }
+        
+        if ($policies['default_consultation_fee'] < 0) {
+            $_SESSION['error'] = 'Consultation fee cannot be negative';
+            $this->redirect('admin.php?action=settings');
+            return;
+        }
+        
+        $success = true;
+        foreach ($policies as $key => $value) {
+            if (!$settingModel->update($key, $value)) {
+                $success = false;
+                break;
+            }
+        }
+        
+        if ($success) {
+            $_SESSION['success'] = 'Appointment policies updated successfully';
+        } else {
+            $_SESSION['error'] = 'Failed to update policies';
+        }
+        
+        $this->redirect('admin.php?action=settings');
     }
 }
 ?>
