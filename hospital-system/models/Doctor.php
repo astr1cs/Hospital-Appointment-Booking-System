@@ -125,5 +125,66 @@ class Doctor {
         $result = $this->db->query($sql);
         return $result->fetch_assoc();
     }
+
+    // Get active doctors count
+public function getActiveCount() {
+    $sql = "SELECT COUNT(*) as count 
+            FROM doctors d
+            JOIN users u ON d.user_id = u.id
+            WHERE u.role = 'doctor' AND u.is_active = 1 AND d.is_approved = 1";
+    
+    $result = $this->db->query($sql);
+    return $result->fetch_assoc()['count'];
+}
+
+// Get pending doctors count
+public function getPendingCount() {
+    $sql = "SELECT COUNT(*) as count 
+            FROM doctors d
+            JOIN users u ON d.user_id = u.id
+            WHERE u.role = 'doctor' AND d.is_approved = 0";
+    
+    $result = $this->db->query($sql);
+    return $result->fetch_assoc()['count'];
+}
+
+// Get pending doctors list
+public function getPending() {
+    $sql = "SELECT u.*, d.*, s.name as specialization_name 
+            FROM users u 
+            INNER JOIN doctors d ON u.id = d.user_id 
+            LEFT JOIN specializations s ON d.specialization_id = s.id 
+            WHERE u.role = 'doctor' AND d.is_approved = 0 
+            ORDER BY u.created_at ASC";
+    
+    return $this->db->query($sql);
+}
+
+
+// Get doctor performance report
+public function getPerformanceReport() {
+    $sql = "SELECT 
+                u.id as doctor_id,
+                u.name as doctor_name,
+                s.name as specialization_name,
+                COUNT(DISTINCT a.id) as total_appointments,
+                SUM(CASE WHEN a.status = 'completed' THEN 1 ELSE 0 END) as completed_appointments,
+                SUM(CASE WHEN a.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_appointments,
+                SUM(CASE WHEN a.status = 'no_show' THEN 1 ELSE 0 END) as no_show_appointments,
+                ROUND(AVG(r.rating), 2) as avg_rating,
+                COUNT(DISTINCT r.id) as total_reviews,
+                ROUND(SUM(CASE WHEN a.status = 'no_show' THEN 1 ELSE 0 END) * 100.0 / COUNT(a.id), 2) as no_show_rate
+            FROM users u
+            JOIN doctors d ON u.id = d.user_id
+            JOIN specializations s ON d.specialization_id = s.id
+            LEFT JOIN appointments a ON u.id = a.doctor_id
+            LEFT JOIN doctor_reviews r ON u.id = r.doctor_id AND a.id = r.appointment_id
+            WHERE u.role = 'doctor' AND d.is_approved = 1
+            GROUP BY u.id
+            ORDER BY completed_appointments DESC";
+    return $this->db->query($sql);
+}
+
+
 }
 ?>

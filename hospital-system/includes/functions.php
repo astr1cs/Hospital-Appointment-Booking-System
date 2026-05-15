@@ -136,4 +136,11 @@ function dd($data) {
     echo '</pre>';
     die();
 }
+
+// Get system setting
+function getSetting($key, $default = null) {
+    $settingModel = new Setting();
+    return $settingModel->getValue($key, $default);
+}
+
 ?>

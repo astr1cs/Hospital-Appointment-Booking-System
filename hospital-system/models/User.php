@@ -78,5 +78,15 @@ class User {
         $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
+
+    // Get count of users by role
+public function getCountByRole($role) {
+    $sql = "SELECT COUNT(*) as count FROM users WHERE role = ? AND is_active = 1";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("s", $role);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc()['count'];
+}
 }
 ?>
