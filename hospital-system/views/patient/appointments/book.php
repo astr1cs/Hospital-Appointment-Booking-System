@@ -79,99 +79,98 @@ document.getElementById('appointmentDate').addEventListener('change', function()
     var date = this.value;
     var doctorId = <?php echo $doctor['user_id']; ?>;
     var slotsDiv = document.getElementById('timeSlots');
-    
+
     if (date) {
         // Show loading
-        slotsDiv.innerHTML = '<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> Loading available slots...</div>';
-        
-        // AJAX request using XMLHttpRequest
+        slotsDiv.innerHTML =
+            '<div class="loading-slots"><i class="fas fa-spinner fa-spin"></i> Loading available slots...</div>';
+
+        // AJAX request
         var xhr = new XMLHttpRequest();
         xhr.open('POST', '<?php echo SITE_URL; ?>patient.php?action=appointments&sub=getSlots', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        
+
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                if (xhr.status === 200) {
-                    try {
-                        var response = JSON.parse(xhr.responseText);
-                        console.log('Response:', response);
-                        
-                        if (response.success) {
-                            if (response.slots && response.slots.length > 0) {
-                                displaySlots(response.slots);
-                            } else {
-                                slotsDiv.innerHTML = '<p class="text-muted">No available time slots for this date. Please select another date.</p>';
-                                document.getElementById('submitBtn').disabled = true;
-                            }
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                // Remove BOM character and any leading invisible characters
+                var responseText = xhr.responseText.replace(/^\uFEFF/, '').trim();
+                console.log('Response:', responseText);
+                try {
+                    var response = JSON.parse(responseText);
+                    if (response.success) {
+                        if (response.slots && response.slots.length > 0) {
+                            displaySlots(response.slots);
                         } else {
-                            slotsDiv.innerHTML = '<p class="text-muted">' + (response.message || 'Unable to load slots') + '</p>';
+                            slotsDiv.innerHTML =
+                                '<p class="text-muted">No available slots for this date. Please select another date.</p>';
                             document.getElementById('submitBtn').disabled = true;
                         }
-                    } catch(e) {
-                        console.error('Parse error:', e);
-                        slotsDiv.innerHTML = '<p class="text-muted">Error loading slots. Please try again.</p>';
+                    } else {
+                        slotsDiv.innerHTML = '<p class="text-muted">' + (response.message ||
+                            'Error loading slots') + '</p>';
                         document.getElementById('submitBtn').disabled = true;
                     }
-                } else {
-                    slotsDiv.innerHTML = '<p class="text-muted">Server error. Please try again.</p>';
+                } catch (e) {
+                    console.error('Error:', e);
+                    slotsDiv.innerHTML = '<p class="text-muted">Error loading slots. Please try again.</p>';
                     document.getElementById('submitBtn').disabled = true;
                 }
             }
         };
-        
+
         xhr.send('doctor_id=' + encodeURIComponent(doctorId) + '&date=' + encodeURIComponent(date));
     }
 });
 
 function displaySlots(slots) {
     var slotsDiv = document.getElementById('timeSlots');
-    
+    var selectedTimeInput = document.getElementById('selectedTime');
+
     if (!slots || slots.length === 0) {
-        slotsDiv.innerHTML = '<p class="text-muted">No available time slots for this date. Please select another date.</p>';
+        slotsDiv.innerHTML = '<p class="text-muted">No available time slots for this date.</p>';
         document.getElementById('submitBtn').disabled = true;
         return;
     }
-    
+
     var html = '<div class="slots-grid">';
-    
     for (var i = 0; i < slots.length; i++) {
         var slot = slots[i];
         var statusClass = slot.available ? 'slot-available' : 'slot-booked';
-        var onclickAttr = slot.available ? 'onclick="selectSlot(this, \'' + slot.time_value + '\', \'' + slot.time + '\')"' : '';
-        html += '<div class="slot ' + statusClass + '" ' + onclickAttr + ' data-time="' + slot.time_value + '">' + slot.time + '</div>';
+        var onclickAttr = slot.available ? 'onclick="selectSlot(this, \'' + slot.time_value + '\')"' : '';
+        html += '<div class="slot ' + statusClass + '" ' + onclickAttr + ' data-time="' + slot.time_value + '">' + slot
+            .time + '</div>';
     }
-    
     html += '</div>';
+
     slotsDiv.innerHTML = html;
     document.getElementById('submitBtn').disabled = true;
 }
 
-function selectSlot(element, timeValue, timeDisplay) {
+function selectSlot(element, timeValue) {
     // Remove selected class from all slots
     var slots = document.querySelectorAll('.slot');
     for (var i = 0; i < slots.length; i++) {
         slots[i].classList.remove('slot-selected');
     }
-    
+
     // Add selected class to clicked slot
     element.classList.add('slot-selected');
-    
+
     // Set hidden input value
     document.getElementById('selectedTime').value = timeValue;
-    
+
     // Enable submit button
     document.getElementById('submitBtn').disabled = false;
 }
 
-// Also ensure the form validation before submit
-document.getElementById('bookingForm').addEventListener('submit', function(e) {
-    var selectedTime = document.getElementById('selectedTime').value;
-    if (!selectedTime) {
-        e.preventDefault();
-        alert('Please select a time slot');
-        return false;
-    }
-});
+// Make sure the hidden input exists
+if (!document.getElementById('selectedTime')) {
+    var hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'time';
+    hiddenInput.id = 'selectedTime';
+    document.querySelector('#bookingForm').appendChild(hiddenInput);
+}
 </script>
 
 
