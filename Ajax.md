@@ -6,3 +6,6 @@
 
 **Patient Module:**
 1. Get available time slots - When date is selected, XMLHttpRequest to `patient.php?action=appointments&sub=getSlots`, returns JSON slots and displays dynamically without page reload
+
+**Doctor Module:**
+1. Check-in patient - Click "Check In" button sends XMLHttpRequest to `doctor.php?action=appointments&sub=checkin`, updates appointment status to "checked_in" and changes UI dynamically without page reload
