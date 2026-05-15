@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Payment Receipt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt - City Hospital</title>
     <style>
         * {
             margin: 0;
@@ -23,7 +24,7 @@
             overflow: hidden;
         }
         .receipt-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: white;
             padding: 30px;
             text-align: center;
@@ -31,6 +32,11 @@
         .receipt-header h1 {
             margin-bottom: 10px;
             font-size: 28px;
+        }
+        .receipt-header p {
+            margin: 3px 0;
+            opacity: 0.8;
+            font-size: 12px;
         }
         .receipt-body {
             padding: 30px;
@@ -42,6 +48,10 @@
         .receipt-title h2 {
             color: #333;
             margin-bottom: 5px;
+        }
+        .receipt-title p {
+            color: #666;
+            font-size: 13px;
         }
         .info-row {
             display: flex;
@@ -58,7 +68,7 @@
             color: #333;
         }
         .amount-row {
-            background: #f8f9fa;
+            background: #e8f5e9;
             padding: 15px;
             margin: 20px 0;
             border-radius: 8px;
@@ -78,27 +88,43 @@
             border-top: 1px solid #eee;
             margin-top: 20px;
             color: #999;
-            font-size: 12px;
+            font-size: 11px;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
         }
         .print-btn {
-            display: block;
-            width: 200px;
-            margin: 20px auto 0;
-            padding: 10px;
             background: #667eea;
             color: white;
             border: none;
+            padding: 10px 24px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            margin-right: 10px;
+        }
+        .close-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
         }
         @media print {
             body {
                 padding: 0;
                 background: white;
             }
-            .print-btn {
+            .button-container {
                 display: none;
+            }
+            .receipt-container {
+                box-shadow: none;
+                margin: 0;
             }
         }
     </style>
@@ -118,7 +144,7 @@
         
         <div class="info-row">
             <span class="info-label">Date:</span>
-            <span class="info-value"><?php echo date('F d, Y h:i A', strtotime($bill['paid_at'])); ?></span>
+            <span class="info-value"><?php echo $bill['paid_at'] ? date('F d, Y h:i A', strtotime($bill['paid_at'])) : date('F d, Y h:i A'); ?></span>
         </div>
         <div class="info-row">
             <span class="info-label">Patient Name:</span>
@@ -155,6 +181,9 @@
         </div>
     </div>
 </div>
-<button onclick="window.print();" class="print-btn">Print Receipt</button>
+<div class="button-container">
+    <button onclick="window.print();" class="print-btn"><i class="fas fa-print"></i> Print Receipt</button>
+    <button onclick="window.close();" class="close-btn"><i class="fas fa-times"></i> Close</button>
+</div>
 </body>
 </html>

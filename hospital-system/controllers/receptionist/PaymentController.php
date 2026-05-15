@@ -78,33 +78,33 @@ class PaymentController extends ReceptionistBaseController {
     
     // Confirm payment
     public function confirm() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('receptionist.php?action=payments');
-            return;
-        }
-        
-        $billId = $_POST['bill_id'] ?? null;
-        $paymentMethod = $_POST['payment_method'] ?? 'cash';
-        
-        if (!$billId) {
-            $_SESSION['error'] = 'Bill ID required';
-            $this->redirect('receptionist.php?action=payments');
-            return;
-        }
-        
-        // Update payment status
-        $sql = "UPDATE billing SET payment_status = 'paid', payment_method = ?, paid_at = NOW() WHERE id = ? AND payment_status = 'pending'";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("si", $paymentMethod, $billId);
-        
-        if ($stmt->execute() && $stmt->affected_rows > 0) {
-            $_SESSION['success'] = 'Payment processed successfully';
-        } else {
-            $_SESSION['error'] = 'Failed to process payment';
-        }
-        
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         $this->redirect('receptionist.php?action=payments');
+        return;
     }
+    
+    $billId = $_POST['bill_id'] ?? null;
+    $paymentMethod = $_POST['payment_method'] ?? 'cash';
+    
+    if (!$billId) {
+        $_SESSION['error'] = 'Bill ID required';
+        $this->redirect('receptionist.php?action=payments');
+        return;
+    }
+    
+    // Update payment status with paid_at timestamp
+    $sql = "UPDATE billing SET payment_status = 'paid', payment_method = ?, paid_at = NOW() WHERE id = ? AND payment_status = 'pending'";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("si", $paymentMethod, $billId);
+    
+    if ($stmt->execute() && $stmt->affected_rows > 0) {
+        $_SESSION['success'] = 'Payment processed successfully';
+    } else {
+        $_SESSION['error'] = 'Failed to process payment';
+    }
+    
+    $this->redirect('receptionist.php?action=payments');
+}
     
     // Print receipt
     public function receipt($id) {
