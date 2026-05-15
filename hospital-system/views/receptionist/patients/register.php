@@ -2,8 +2,22 @@
     <h1 class="page-title">Register New Patient</h1>
 </div>
 
+<?php if (isset($success) && $success): ?>
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($success); ?>
+    </div>
+    <script>
+        // Clear the form after successful registration
+        document.getElementById('registrationForm')?.reset();
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    </script>
+<?php endif; ?>
+
 <?php if (isset($error) && $error): ?>
-    <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
+    </div>
 <?php endif; ?>
 
 <div class="register-card">
@@ -11,23 +25,26 @@
         <h3><i class="fas fa-user-plus"></i> Patient Registration Form</h3>
     </div>
     <div class="card-body">
-        <form method="POST" action="<?php echo SITE_URL; ?>receptionist.php?action=patients&sub=store">
+        <form method="POST" action="<?php echo SITE_URL; ?>receptionist.php?action=patients&sub=store" id="registrationForm">
             <div class="form-section">
                 <h4>Personal Information</h4>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Full Name *</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <input type="text" name="name" class="form-control" required 
+                               value="<?php echo isset($_GET['clear']) ? '' : (isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''); ?>">
                     </div>
                     <div class="form-group">
                         <label>Email *</label>
-                        <input type="email" name="email" class="form-control" required>
+                        <input type="email" name="email" class="form-control" required
+                               value="<?php echo isset($_GET['clear']) ? '' : (isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''); ?>">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Phone *</label>
-                        <input type="tel" name="phone" class="form-control" required>
+                        <input type="tel" name="phone" class="form-control" required
+                               value="<?php echo isset($_GET['clear']) ? '' : (isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''); ?>">
                     </div>
                     <div class="form-group">
                         <label>Password</label>
@@ -38,7 +55,8 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Date of Birth</label>
-                        <input type="date" name="date_of_birth" class="form-control">
+                        <input type="date" name="date_of_birth" class="form-control"
+                               value="<?php echo isset($_GET['clear']) ? '' : (isset($_POST['date_of_birth']) ? htmlspecialchars($_POST['date_of_birth']) : ''); ?>">
                     </div>
                     <div class="form-group">
                         <label>Blood Group</label>
@@ -95,7 +113,6 @@
         </form>
     </div>
 </div>
-
 <style>
 .page-header {
     margin-bottom: 25px;

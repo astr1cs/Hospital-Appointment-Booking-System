@@ -239,6 +239,25 @@ function selectSlot(element, timeValue) {
     document.getElementById('selectedPatientId').value = '<?php echo $_SESSION['new_patient_id']; ?>';
     <?php unset($_SESSION['new_patient_id']); ?>
 <?php endif; ?>
+
+// Auto-select newly registered patient
+<?php if ($newPatientId): ?>
+    var patientSelect = document.querySelector('select[name="patient_id"]');
+    if (patientSelect) {
+        // Check if the new patient exists in dropdown
+        for(var i = 0; i < patientSelect.options.length; i++) {
+            if(patientSelect.options[i].value == '<?php echo $newPatientId; ?>') {
+                patientSelect.selectedIndex = i;
+                break;
+            }
+        }
+        // Trigger change event to show appointment section
+        patientSelect.dispatchEvent(new Event('change'));
+    }
+    // Show success message
+    showMessage('<?php echo htmlspecialchars($success ?? "Patient registered successfully!"); ?>', 'success');
+<?php endif; ?>
+
 </script>
 
 <style>

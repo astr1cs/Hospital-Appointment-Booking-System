@@ -116,73 +116,78 @@ class PatientController extends ReceptionistBaseController {
     }
     
     // Store new patient
-    public function store() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('receptionist.php?action=patients&sub=register');
-            return;
-        }
-        
-        $name = $_POST['name'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $phone = $_POST['phone'] ?? '';
-        $password = $_POST['password'] ?? 'password123';
-        $dateOfBirth = $_POST['date_of_birth'] ?? null;
-        $bloodGroup = $_POST['blood_group'] ?? null;
-        $gender = $_POST['gender'] ?? null;
-        $address = $_POST['address'] ?? null;
-        $emergencyName = $_POST['emergency_contact_name'] ?? null;
-        $emergencyPhone = $_POST['emergency_contact_phone'] ?? null;
-        
-        // Validate
-        if (empty($name) || empty($email) || empty($phone)) {
-            $_SESSION['error'] = 'Name, email and phone are required';
-            $this->redirect('receptionist.php?action=patients&sub=register');
-            return;
-        }
-        
-        // Check if email exists
-        $sql = "SELECT id FROM users WHERE email = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        if ($stmt->get_result()->num_rows > 0) {
-            $_SESSION['error'] = 'Email already exists';
-            $this->redirect('receptionist.php?action=patients&sub=register');
-            return;
-        }
-        
-        $passwordHash = password_hash($password, PASSWORD_BCRYPT);
-        
-        $this->db->begin_transaction();
-        
-        try {
-            // Insert into users
-            $sql = "INSERT INTO users (name, email, password_hash, phone, role, is_active) 
-                    VALUES (?, ?, ?, ?, 'patient', 1)";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bind_param("ssss", $name, $email, $passwordHash, $phone);
-            $stmt->execute();
-            $userId = $this->db->insert_id;
-            
-            // Insert into patients
-            $sql = "INSERT INTO patients (user_id, date_of_birth, blood_group, gender, address, 
-                    emergency_contact_name, emergency_contact_phone) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $this->db->prepare($sql);
-            $stmt->bind_param("issssss", $userId, $dateOfBirth, $bloodGroup, $gender, 
-                            $address, $emergencyName, $emergencyPhone);
-            $stmt->execute();
-            
-            $this->db->commit();
-            
-            $_SESSION['success'] = 'Patient registered successfully!';
-            $this->redirect('receptionist.php?action=patients&sub=search');
-            
-        } catch (Exception $e) {
-            $this->db->rollback();
-            $_SESSION['error'] = 'Failed to register patient: ' . $e->getMessage();
-            $this->redirect('receptionist.php?action=patients&sub=register');
-        }
+   // Store new patient
+// Store new patient
+public function store() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        $this->redirect('receptionist.php?action=patients&sub=register');
+        return;
     }
+    
+    $name = $_POST['name'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $phone = $_POST['phone'] ?? '';
+    $password = $_POST['password'] ?? 'password123';
+    $dateOfBirth = $_POST['date_of_birth'] ?? null;
+    $bloodGroup = $_POST['blood_group'] ?? null;
+    $gender = $_POST['gender'] ?? null;
+    $address = $_POST['address'] ?? null;
+    $emergencyName = $_POST['emergency_contact_name'] ?? null;
+    $emergencyPhone = $_POST['emergency_contact_phone'] ?? null;
+    
+    // Validate
+    if (empty($name) || empty($email) || empty($phone)) {
+        $_SESSION['error'] = 'Name, email and phone are required';
+        $this->redirect('receptionist.php?action=patients&sub=register');
+        return;
+    }
+    
+    // Check if email exists
+    $sql = "SELECT id FROM users WHERE email = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        $_SESSION['error'] = 'Email already exists';
+        $this->redirect('receptionist.php?action=patients&sub=register');
+        return;
+    }
+    
+    $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+    
+    $this->db->begin_transaction();
+    
+    try {
+        // Insert into users
+        $sql = "INSERT INTO users (name, email, password_hash, phone, role, is_active) 
+                VALUES (?, ?, ?, ?, 'patient', 1)";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("ssss", $name, $email, $passwordHash, $phone);
+        $stmt->execute();
+        $userId = $this->db->insert_id;
+        
+        // Insert into patients
+        $sql = "INSERT INTO patients (user_id, date_of_birth, blood_group, gender, address, 
+                emergency_contact_name, emergency_contact_phone) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("issssss", $userId, $dateOfBirth, $bloodGroup, $gender, 
+                        $address, $emergencyName, $emergencyPhone);
+        $stmt->execute();
+        
+        $this->db->commit();
+        
+        // Set success message and stay on register page
+        $_SESSION['success'] = 'Patient registered successfully! You can now book an appointment.';
+        $this->redirect('receptionist.php?action=patients&sub=register');
+        
+    } catch (Exception $e) {
+        $this->db->rollback();
+        $_SESSION['error'] = 'Failed to register patient: ' . $e->getMessage();
+        $this->redirect('receptionist.php?action=patients&sub=register');
+    }
+}
+
+
 }
 ?>

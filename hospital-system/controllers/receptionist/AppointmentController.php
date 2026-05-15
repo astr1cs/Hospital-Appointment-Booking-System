@@ -85,19 +85,21 @@ class AppointmentController extends ReceptionistBaseController {
     }
     
     // Cancel appointment
-    public function cancel($id) {
-        $sql = "UPDATE appointments SET status = 'cancelled' WHERE id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        
-        if ($stmt->execute()) {
-            $_SESSION['success'] = 'Appointment cancelled successfully';
-        } else {
-            $_SESSION['error'] = 'Failed to cancel appointment';
-        }
-        
-        $this->redirect('receptionist.php?action=appointments&sub=today');
+    // Cancel appointment
+public function cancel($id) {
+    $sql = "UPDATE appointments SET status = 'cancelled' WHERE id = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("i", $id);
+    
+    if ($stmt->execute()) {
+        $_SESSION['success'] = 'Appointment cancelled successfully';
+    } else {
+        $_SESSION['error'] = 'Failed to cancel appointment';
     }
+    
+    // Redirect back to today's schedule page
+    $this->redirect('receptionist.php?action=appointments&sub=today');
+}
     
     // Waiting queue (checked-in patients)
     public function queue() {
@@ -126,6 +128,8 @@ class AppointmentController extends ReceptionistBaseController {
     }
 
 // Show walk-in booking form
+
+        // Show walk-in booking form
 public function book() {
     // Get all doctors
     $sql = "SELECT u.id, u.name, d.consultation_fee, s.name as specialization_name
@@ -140,13 +144,24 @@ public function book() {
     $sql = "SELECT id, name, phone FROM users WHERE role = 'patient' AND is_active = 1 ORDER BY name LIMIT 50";
     $patients = $this->db->query($sql);
     
+    // Check for newly registered patient
+    $newPatientId = $_SESSION['new_patient_id'] ?? null;
+    $newPatientName = $_SESSION['new_patient_name'] ?? null;
+    
     $data = [
         'title' => 'Walk-in Booking',
         'doctors' => $doctors,
         'patients' => $patients,
+        'newPatientId' => $newPatientId,
+        'newPatientName' => $newPatientName,
+        'success' => $_SESSION['success'] ?? null,
         'error' => $_SESSION['error'] ?? null
     ];
     
+    // Clear session variables
+    unset($_SESSION['new_patient_id']);
+    unset($_SESSION['new_patient_name']);
+    unset($_SESSION['success']);
     unset($_SESSION['error']);
     
     $this->view('appointments/book', $data);
@@ -292,7 +307,9 @@ public function store() {
 }
 
 // Register new patient from walk-in
-public function registerPatient() {
+
+        
+    public function registerPatient() {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         $this->redirect('receptionist.php?action=appointments&sub=book');
         return;
@@ -301,7 +318,7 @@ public function registerPatient() {
     $name = $_POST['name'] ?? '';
     $email = $_POST['email'] ?? '';
     $phone = $_POST['phone'] ?? '';
-    $password = $_POST['password'] ?? 'password123'; // Default password
+    $password = $_POST['password'] ?? 'password123';
     
     if (empty($name) || empty($email) || empty($phone)) {
         $_SESSION['error'] = 'Name, email and phone are required';
@@ -335,12 +352,15 @@ public function registerPatient() {
         $stmt->bind_param("i", $patientId);
         $stmt->execute();
         
+        // Store success message and new patient ID in session
         $_SESSION['success'] = 'Patient registered successfully! You can now book an appointment.';
         $_SESSION['new_patient_id'] = $patientId;
+        $_SESSION['new_patient_name'] = $name;
     } else {
         $_SESSION['error'] = 'Failed to register patient';
     }
     
+    // Redirect back to booking page
     $this->redirect('receptionist.php?action=appointments&sub=book');
 }
 

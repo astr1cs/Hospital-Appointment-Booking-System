@@ -1,3 +1,4 @@
+
 <div class="page-header">
     <h1 class="page-title">Search Patients</h1>
 </div>
