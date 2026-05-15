@@ -65,9 +65,6 @@ $userName = $_SESSION['user_name'];
         <i class="fas fa-chart-line"></i> <span>Reports</span>
     </a>
     
-<a href="<?php echo SITE_URL; ?>doctor.php?action=reports&sub=stats" class="<?php echo ($current_action == 'reports' && $subAction == 'stats') ? 'active' : ''; ?>">
-    <i class="fas fa-chart-bar"></i> <span>Appointment Stats</span>
-</a>
 <a href="<?php echo SITE_URL; ?>doctor.php?action=reports&sub=followups" class="<?php echo ($current_action == 'reports' && $subAction == 'followups') ? 'active' : ''; ?>">
     <i class="fas fa-calendar-check"></i> <span>Follow-ups</span>
 </a>

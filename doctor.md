@@ -44,21 +44,18 @@ hospital-system/
 └── assets/css/doctor.css                # Doctor-specific styles
 
 
-#	Feature	Status
-1	Dashboard with statistics	✅ Done
-2	Today's Schedule with AJAX Check-in	✅ Done
-3	Weekly Schedule	✅ Done
-4	All Appointments with Filters	✅ Done
-5	Appointment Details View	✅ Done
-6	Consultation Notes (Symptoms, Diagnosis, Prescription)	✅ Done
-7	Schedule Management (Availability)	✅ Done
-8	Leave Dates Management	✅ Done
-9	Profile Management (with AJAX update)	✅ Done
-10	Patient Medical History View	✅ Done
-11	Earnings Report	✅ Done
-12	Appointment Statistics	✅ Done
-❌ Remaining Features:
-#	Feature	Priority
-1	Reviews & Ratings View - View patient reviews and ratings	Medium
-2	Follow-up Appointments List - View patients with follow-up dates	Low
-3	Reply to Reviews - Allow doctor to respond to patient reviews	Low
+1	Dashboard with statistics	✅
+2	Today's Schedule (AJAX Check-in)	✅
+3	Weekly Schedule	✅
+4	All Appointments with Filters	✅
+5	Appointment Details View	✅
+6	Consultation Notes	✅
+7	Schedule Management (Availability)	✅
+8	Leave Dates Management	✅
+9	Profile Management (AJAX update)	✅
+10	Patient Medical History View	✅
+11	Earnings Report	✅
+12	Appointment Statistics	✅
+13	Patient Reviews View	✅
+14	Follow-up Appointments List	✅
+
