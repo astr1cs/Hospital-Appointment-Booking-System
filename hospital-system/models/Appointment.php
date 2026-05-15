@@ -323,6 +323,46 @@ public function book($patientId, $doctorId, $date, $time, $reason, $bookedBy = '
     }
     return false;
 }
+// Get today's appointments for a doctor
+public function getTodayAppointments($doctorId) {
+    $today = date('Y-m-d');
+    $sql = "SELECT a.*, p.name as patient_name, p.email as patient_email, p.phone as patient_phone,
+                   p.date_of_birth, p.blood_group, p.gender
+            FROM appointments a
+            JOIN users p ON a.patient_id = p.id
+            WHERE a.doctor_id = ? AND a.appointment_date = ?
+            ORDER BY a.appointment_time ASC";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("is", $doctorId, $today);
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
+// Update appointment status (for check-in)
+public function updateStatus($appointmentId, $status) {
+    $sql = "UPDATE appointments SET status = ? WHERE id = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("si", $status, $appointmentId);
+    return $stmt->execute();
+}
+
+// Get weekly appointments
+public function getWeeklyAppointments($doctorId) {
+    $startOfWeek = date('Y-m-d', strtotime('monday this week'));
+    $endOfWeek = date('Y-m-d', strtotime('sunday this week'));
+    
+    $sql = "SELECT a.*, p.name as patient_name, 
+                   DAYNAME(a.appointment_date) as day_name
+            FROM appointments a
+            JOIN users p ON a.patient_id = p.id
+            WHERE a.doctor_id = ? AND a.appointment_date BETWEEN ? AND ?
+            ORDER BY a.appointment_date ASC, a.appointment_time ASC";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("iss", $doctorId, $startOfWeek, $endOfWeek);
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
 
 }
 ?>
