@@ -11,7 +11,7 @@ $role = SessionManager::getUserRole();
 
 switch ($role) {
     case 'patient':
-        header('Location: patient/dashboard.php');
+        header('Location: patient.php?action=dashboard');
         break;
     case 'doctor':
         header('Location: doctor/dashboard.php');
