@@ -184,7 +184,101 @@ public function getPerformanceReport() {
             ORDER BY completed_appointments DESC";
     return $this->db->query($sql);
 }
+//patients
 
+// Get all approved doctors for patient browsing
+public function getAllForPatients($search = null, $specializationId = null, $minFee = null, $maxFee = null) {
+    $sql = "SELECT u.id as user_id, u.name, u.profile_pic, 
+                   d.*, s.name as specialization_name,
+                   COALESCE(AVG(r.rating), 0) as avg_rating,
+                   COUNT(DISTINCT r.id) as total_reviews
+            FROM users u 
+            JOIN doctors d ON u.id = d.user_id 
+            JOIN specializations s ON d.specialization_id = s.id 
+            LEFT JOIN doctor_reviews r ON u.id = r.doctor_id
+            WHERE u.role = 'doctor' AND u.is_active = 1 AND d.is_approved = 1";
+    
+    $params = [];
+    $types = "";
+    
+    if ($search) {
+        $searchTerm = "%{$search}%";
+        $sql .= " AND (u.name LIKE ? OR s.name LIKE ?)";
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+        $types .= "ss";
+    }
+    
+    if ($specializationId) {
+        $sql .= " AND d.specialization_id = ?";
+        $params[] = $specializationId;
+        $types .= "i";
+    }
+    
+    if ($minFee) {
+        $sql .= " AND d.consultation_fee >= ?";
+        $params[] = $minFee;
+        $types .= "d";
+    }
+    
+    if ($maxFee) {
+        $sql .= " AND d.consultation_fee <= ?";
+        $params[] = $maxFee;
+        $types .= "d";
+    }
+    
+    $sql .= " GROUP BY u.id ORDER BY avg_rating DESC, u.name ASC";
+    
+    $stmt = $this->db->prepare($sql);
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
+// Get doctor details for patient view
+public function getDoctorDetails($doctorUserId) {
+    $sql = "SELECT u.id as user_id, u.name, u.email, u.phone, u.profile_pic,
+                   d.*, s.name as specialization_name,
+                   COALESCE(AVG(r.rating), 0) as avg_rating,
+                   COUNT(DISTINCT r.id) as total_reviews
+            FROM users u 
+            JOIN doctors d ON u.id = d.user_id 
+            JOIN specializations s ON d.specialization_id = s.id 
+            LEFT JOIN doctor_reviews r ON u.id = r.doctor_id
+            WHERE u.id = ? AND u.role = 'doctor' AND u.is_active = 1 AND d.is_approved = 1
+            GROUP BY u.id";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("i", $doctorUserId);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+}
+
+// Get doctor reviews
+public function getDoctorReviews($doctorUserId, $limit = 10) {
+    $sql = "SELECT r.*, u.name as patient_name
+            FROM doctor_reviews r
+            JOIN users u ON r.patient_id = u.id
+            WHERE r.doctor_id = ?
+            ORDER BY r.created_at DESC
+            LIMIT ?";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("ii", $doctorUserId, $limit);
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
+// Get doctor availability schedule
+public function getAvailability($doctorUserId) {
+    $sql = "SELECT * FROM doctor_availability WHERE doctor_id = ? AND is_available = 1 ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("i", $doctorUserId);
+    $stmt->execute();
+    return $stmt->get_result();
+}
 
 }
 ?>

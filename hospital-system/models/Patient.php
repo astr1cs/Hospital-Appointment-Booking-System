@@ -102,5 +102,14 @@ class Patient {
         $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
+
+    // Get patient's dependents
+public function getDependents($patientId) {
+    $sql = "SELECT * FROM dependents WHERE primary_patient_id = ? ORDER BY name";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("i", $patientId);
+    $stmt->execute();
+    return $stmt->get_result();
+}
 }
 ?>
