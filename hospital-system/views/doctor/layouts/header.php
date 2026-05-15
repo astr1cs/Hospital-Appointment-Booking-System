@@ -36,7 +36,7 @@ $userName = $_SESSION['user_name'];
                     class="<?php echo $current_action == 'appointments' ? 'active' : ''; ?>">
                     <i class="fas fa-calendar-day"></i> <span>Today's Schedule</span>
                 </a>
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=appointments" class="">
+                <a href="<?php echo SITE_URL; ?>doctor.php?action=appointments&sub=index" class="">
                     <i class="fas fa-calendar-week"></i> <span>All Appointments</span>
                 </a>
                 <a href="<?php echo SITE_URL; ?>doctor.php?action=schedule"

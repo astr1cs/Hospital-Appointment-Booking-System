@@ -4,9 +4,74 @@ require_once __DIR__ . '/BaseController.php';
 class AppointmentController extends DoctorBaseController {
     
     // Default - redirect to today's schedule
-    public function index() {
-        $this->redirect('doctor.php?action=appointments&sub=today');
+  // All appointments (not just today)
+public function index() {
+    $userId = $this->getUserId();
+    
+    // Get filter parameters
+    $status = $_GET['status'] ?? 'all';
+    $dateFrom = $_GET['date_from'] ?? null;
+    $dateTo = $_GET['date_to'] ?? null;
+    
+    $sql = "SELECT a.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone
+            FROM appointments a
+            JOIN users u ON a.patient_id = u.id
+            WHERE a.doctor_id = ?";
+    $params = [$userId];
+    $types = "i";
+    
+    if ($status != 'all') {
+        $sql .= " AND a.status = ?";
+        $params[] = $status;
+        $types .= "s";
     }
+    
+    if ($dateFrom) {
+        $sql .= " AND a.appointment_date >= ?";
+        $params[] = $dateFrom;
+        $types .= "s";
+    }
+    
+    if ($dateTo) {
+        $sql .= " AND a.appointment_date <= ?";
+        $params[] = $dateTo;
+        $types .= "s";
+    }
+    
+    $sql .= " ORDER BY a.appointment_date DESC, a.appointment_time DESC";
+    
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $appointments = $stmt->get_result();
+    
+    // Get statistics
+    $statsSql = "SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                    SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
+                    SUM(CASE WHEN status = 'checked_in' THEN 1 ELSE 0 END) as checked_in,
+                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+                    SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
+                    SUM(CASE WHEN status = 'no_show' THEN 1 ELSE 0 END) as no_show
+                FROM appointments
+                WHERE doctor_id = ?";
+    $stmt = $this->db->prepare($statsSql);
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stats = $stmt->get_result()->fetch_assoc();
+    
+    $data = [
+        'title' => 'All Appointments',
+        'appointments' => $appointments,
+        'stats' => $stats,
+        'currentStatus' => $status,
+        'dateFrom' => $dateFrom,
+        'dateTo' => $dateTo
+    ];
+    
+    $this->view('appointments/all', $data);
+}
     
     // Today's schedule
     // Today's schedule
