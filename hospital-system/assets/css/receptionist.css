@@ -1,0 +1,109 @@
+.receptionist-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.receptionist-sidebar {
+    width: 280px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.sidebar-header {
+    padding: 25px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-header h2 {
+    color: white;
+    font-size: 20px;
+    margin: 0;
+}
+
+.sidebar-nav {
+    padding: 20px 0;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 25px;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border-left: 3px solid #667eea;
+}
+
+.sidebar-nav a i {
+    width: 20px;
+}
+
+.sidebar-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-footer a {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+}
+
+.receptionist-main {
+    flex: 1;
+    margin-left: 280px;
+    background: #f5f7fa;
+    min-height: 100vh;
+}
+
+.receptionist-topbar {
+    background: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.receptionist-content {
+    padding: 30px;
+}
+
+.role-badge {
+    background: #667eea;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .receptionist-sidebar {
+        width: 70px;
+    }
+    .receptionist-sidebar .sidebar-header h2,
+    .receptionist-sidebar .sidebar-nav a span,
+    .receptionist-sidebar .sidebar-footer a span {
+        display: none;
+    }
+    .receptionist-main {
+        margin-left: 70px;
+    }
+}
