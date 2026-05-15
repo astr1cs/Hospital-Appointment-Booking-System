@@ -4,62 +4,69 @@ require_once __DIR__ . '/BaseController.php';
 class AppointmentController extends ReceptionistBaseController {
     
     // Today's schedule for all doctors
-    public function today() {
-        $today = date('Y-m-d');
-        
-        // Get all appointments for today grouped by doctor
-        $sql = "SELECT a.*, 
-                       d.name as doctor_name,
-                       d.id as doctor_user_id,
-                       p.name as patient_name,
-                       p.phone as patient_phone
-                FROM appointments a
-                JOIN users d ON a.doctor_id = d.id
-                JOIN users p ON a.patient_id = p.id
-                WHERE a.appointment_date = ?
-                ORDER BY d.name, a.appointment_time ASC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $today);
-        $stmt->execute();
-        $appointments = $stmt->get_result();
-        
-        // Get statistics
-        $sql = "SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-                    SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
-                    SUM(CASE WHEN status = 'checked_in' THEN 1 ELSE 0 END) as checked_in,
-                    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
-                    SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
-                FROM appointments
-                WHERE appointment_date = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("s", $today);
-        $stmt->execute();
-        $stats = $stmt->get_result()->fetch_assoc();
-        
-        // Group appointments by doctor
-        $grouped = [];
-        while ($row = $appointments->fetch_assoc()) {
-            $doctorId = $row['doctor_user_id'];
-            if (!isset($grouped[$doctorId])) {
-                $grouped[$doctorId] = [
-                    'doctor_name' => $row['doctor_name'],
-                    'appointments' => []
-                ];
-            }
-            $grouped[$doctorId]['appointments'][] = $row;
+    // Today's schedule for all doctors
+public function today() {
+    $today = date('Y-m-d');
+    
+    // Get all appointments for today grouped by doctor
+    $sql = "SELECT a.*, 
+                   d.name as doctor_name,
+                   d.id as doctor_user_id,
+                   p.name as patient_name,
+                   p.phone as patient_phone
+            FROM appointments a
+            JOIN users d ON a.doctor_id = d.id
+            JOIN users p ON a.patient_id = p.id
+            WHERE a.appointment_date = ?
+            ORDER BY d.name, a.appointment_time ASC";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("s", $today);
+    $stmt->execute();
+    $appointments = $stmt->get_result();
+    
+    // Get statistics
+    $sql = "SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
+                SUM(CASE WHEN status = 'checked_in' THEN 1 ELSE 0 END) as checked_in,
+                SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+            FROM appointments
+            WHERE appointment_date = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("s", $today);
+    $stmt->execute();
+    $stats = $stmt->get_result()->fetch_assoc();
+    
+    // Group appointments by doctor
+    $grouped = [];
+    while ($row = $appointments->fetch_assoc()) {
+        $doctorId = $row['doctor_user_id'];
+        if (!isset($grouped[$doctorId])) {
+            $grouped[$doctorId] = [
+                'doctor_name' => $row['doctor_name'],
+                'appointments' => []
+            ];
         }
-        
-        $data = [
-            'title' => 'Today\'s Schedule',
-            'grouped' => $grouped,
-            'stats' => $stats,
-            'today' => $today
-        ];
-        
-        $this->view('appointments/today', $data);
+        $grouped[$doctorId]['appointments'][] = $row;
     }
+    
+    $data = [
+        'title' => 'Today\'s Schedule',
+        'grouped' => $grouped,
+        'stats' => $stats,
+        'today' => $today,
+        'success' => $_SESSION['success'] ?? null,
+        'error' => $_SESSION['error'] ?? null
+    ];
+    
+    // Clear session messages after retrieving
+    unset($_SESSION['success']);
+    unset($_SESSION['error']);
+    
+    $this->view('appointments/today', $data);
+}
     
     // Check in patient
     public function checkin() {
@@ -86,6 +93,7 @@ class AppointmentController extends ReceptionistBaseController {
     
     // Cancel appointment
     // Cancel appointment
+// Cancel appointment
 public function cancel($id) {
     $sql = "UPDATE appointments SET status = 'cancelled' WHERE id = ?";
     $stmt = $this->db->prepare($sql);
@@ -130,6 +138,7 @@ public function cancel($id) {
 // Show walk-in booking form
 
         // Show walk-in booking form
+// Show walk-in booking form
 public function book() {
     // Get all doctors
     $sql = "SELECT u.id, u.name, d.consultation_fee, s.name as specialization_name
