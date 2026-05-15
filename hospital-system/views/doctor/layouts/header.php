@@ -84,9 +84,11 @@ $userName = $_SESSION['user_name'];
         <main class="doctor-main">
             <div class="doctor-topbar">
                 <div class="welcome-text">
-                    <i class="fas fa-user-md"></i> Welcome, <strong>Dr.
-                        <?php echo htmlspecialchars($userName); ?></strong>
-                </div>
+                    <i class="fas fa-user-md"></i> Welcome, <strong>Dr. <?php echo htmlspecialchars($_SESSION['user_name']); ?></strong>
+                    <?php if (isset($_SESSION['doctor_specialization'])): ?>
+              <small>(<?php echo htmlspecialchars($_SESSION['doctor_specialization']); ?>)</small>
+                  <?php endif; ?>
+            </div>
                 <div class="topbar-right">
                     <span class="role-badge"><i class="fas fa-stethoscope"></i> Doctor</span>
                 </div>
