@@ -231,8 +231,22 @@ public function getTopSpecializations($limit = 5) {
 //Patient
 // Get available time slots for a doctor on a specific date
 public function getAvailableSlots($doctorId, $date) {
+    // Check if date is today and time is already past
+    $isToday = ($date == date('Y-m-d'));
+    $currentTime = date('H:i:s');
+    
     $dayOfWeek = date('l', strtotime($date));
     
+    // Check if doctor is on leave for this date
+    $sql = "SELECT id FROM leave_dates WHERE doctor_id = ? AND leave_date = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("is", $doctorId, $date);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        return []; // Doctor on leave
+    }
+    
+    // Get doctor's availability for this day
     $sql = "SELECT start_time, end_time, slot_duration_minutes 
             FROM doctor_availability 
             WHERE doctor_id = ? AND day_of_week = ? AND is_available = 1";
@@ -245,7 +259,7 @@ public function getAvailableSlots($doctorId, $date) {
         return [];
     }
     
-    // Get booked slots
+    // Get already booked slots for this date
     $sql = "SELECT appointment_time FROM appointments 
             WHERE doctor_id = ? AND appointment_date = ? 
             AND status NOT IN ('cancelled', 'no_show')";
@@ -271,10 +285,13 @@ public function getAvailableSlots($doctorId, $date) {
         $slotTime = $current->format('H:i:s');
         $isBooked = in_array($slotTime, $bookedSlots);
         
+        // For today, only show future slots
+        $isPastSlot = ($isToday && $slotTime < $currentTime);
+        
         $slots[] = [
             'time' => $current->format('h:i A'),
             'time_value' => $slotTime,
-            'available' => !$isBooked
+            'available' => (!$isBooked && !$isPastSlot)
         ];
         
         $current->add($interval);

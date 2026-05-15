@@ -14,9 +14,9 @@
 
             <div class="form-group">
                 <label><i class="fas fa-calendar"></i> Select Date</label>
-                <input type="date" name="date" id="appointmentDate" class="form-control" required
-                    min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>"
-                    max="<?php echo date('Y-m-d', strtotime('+30 days')); ?>">
+               <input type="date" name="date" id="appointmentDate" class="form-control" required 
+       min="<?php echo date('Y-m-d'); ?>" 
+       max="<?php echo date('Y-m-d', strtotime('+30 days')); ?>">
                 <small>Select a date to see available time slots</small>
             </div>
 
