@@ -226,5 +226,103 @@ public function getTopSpecializations($limit = 5) {
     $stmt->execute();
     return $stmt->get_result();
 }
+
+
+//Patient
+// Get available time slots for a doctor on a specific date
+public function getAvailableSlots($doctorId, $date) {
+    $dayOfWeek = date('l', strtotime($date));
+    
+    $sql = "SELECT start_time, end_time, slot_duration_minutes 
+            FROM doctor_availability 
+            WHERE doctor_id = ? AND day_of_week = ? AND is_available = 1";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("is", $doctorId, $dayOfWeek);
+    $stmt->execute();
+    $availability = $stmt->get_result()->fetch_assoc();
+    
+    if (!$availability) {
+        return [];
+    }
+    
+    // Get booked slots
+    $sql = "SELECT appointment_time FROM appointments 
+            WHERE doctor_id = ? AND appointment_date = ? 
+            AND status NOT IN ('cancelled', 'no_show')";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("is", $doctorId, $date);
+    $stmt->execute();
+    $bookedResult = $stmt->get_result();
+    
+    $bookedSlots = [];
+    while ($row = $bookedResult->fetch_assoc()) {
+        $bookedSlots[] = $row['appointment_time'];
+    }
+    
+    // Generate slots
+    $start = new DateTime($availability['start_time']);
+    $end = new DateTime($availability['end_time']);
+    $interval = new DateInterval('PT' . $availability['slot_duration_minutes'] . 'M');
+    
+    $slots = [];
+    $current = clone $start;
+    
+    while ($current < $end) {
+        $slotTime = $current->format('H:i:s');
+        $isBooked = in_array($slotTime, $bookedSlots);
+        
+        $slots[] = [
+            'time' => $current->format('h:i A'),
+            'time_value' => $slotTime,
+            'available' => !$isBooked
+        ];
+        
+        $current->add($interval);
+    }
+    
+    return $slots;
+}
+
+// Check if slot is available
+public function isSlotAvailable($doctorId, $date, $time) {
+    $sql = "SELECT COUNT(*) as count FROM appointments 
+            WHERE doctor_id = ? AND appointment_date = ? AND appointment_time = ? 
+            AND status NOT IN ('cancelled', 'no_show')";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("iss", $doctorId, $date, $time);
+    $stmt->execute();
+    $result = $stmt->get_result()->fetch_assoc();
+    
+    return $result['count'] == 0;
+}
+
+// Book appointment
+public function book($patientId, $doctorId, $date, $time, $reason, $bookedBy = 'patient', $dependentId = null) {
+    $sql = "INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, status, booked_by) 
+            VALUES (?, ?, ?, ?, ?, 'pending', ?)";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("iissss", $patientId, $doctorId, $date, $time, $reason, $bookedBy);
+    
+    if ($stmt->execute()) {
+        $appointmentId = $this->db->insert_id;
+        
+        // Create billing record
+        // Get doctor's consultation fee
+        $sql = "SELECT consultation_fee FROM doctors WHERE user_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("i", $doctorId);
+        $stmt->execute();
+        $fee = $stmt->get_result()->fetch_assoc()['consultation_fee'];
+        
+        $sql = "INSERT INTO billing (appointment_id, patient_id, amount, payment_status) VALUES (?, ?, ?, 'pending')";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bind_param("iid", $appointmentId, $patientId, $fee);
+        $stmt->execute();
+        
+        return true;
+    }
+    return false;
+}
+
 }
 ?>

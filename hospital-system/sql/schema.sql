@@ -416,3 +416,4 @@ FROM users WHERE role = 'patient' LIMIT 1;
 INSERT INTO complaints (patient_id, subject, message, status) 
 SELECT id, 'Unclear billing', 'The consultation fee was different from what was shown online.', 'pending'
 FROM users WHERE role = 'patient' LIMIT 1;
+
