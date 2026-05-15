@@ -5,6 +5,7 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'doctor') {
 }
 
 $current_action = $_GET['action'] ?? 'dashboard';
+$subAction = $_GET['sub'] ?? '';  // Add this line
 $userName = $_SESSION['user_name'];
 ?>
 <!DOCTYPE html>
@@ -27,39 +28,51 @@ $userName = $_SESSION['user_name'];
             <div class="sidebar-header">
                 <h2><i class="fas fa-user-md"></i> Doctor Panel</h2>
             </div>
-            <nav class="sidebar-nav">
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=dashboard"
-                    class="<?php echo $current_action == 'dashboard' ? 'active' : ''; ?>">
-                    <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=appointments&sub=today"
-                    class="<?php echo $current_action == 'appointments' ? 'active' : ''; ?>">
-                    <i class="fas fa-calendar-day"></i> <span>Today's Schedule</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=appointments&sub=index" class="">
-                    <i class="fas fa-calendar-week"></i> <span>All Appointments</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=schedule"
-                    class="<?php echo $current_action == 'schedule' ? 'active' : ''; ?>">
-                    <i class="fas fa-clock"></i> <span>My Schedule</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=patients"
-                    class="<?php echo $current_action == 'patients' ? 'active' : ''; ?>">
-                    <i class="fas fa-users"></i> <span>Patients</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=reports"
-                    class="<?php echo $current_action == 'reports' ? 'active' : ''; ?>">
-                    <i class="fas fa-chart-line"></i> <span>Reports</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=reviews"
-                    class="<?php echo $current_action == 'reviews' ? 'active' : ''; ?>">
-                    <i class="fas fa-star"></i> <span>Reviews</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>doctor.php?action=profile"
-                    class="<?php echo $current_action == 'profile' ? 'active' : ''; ?>">
-                    <i class="fas fa-user-circle"></i> <span>My Profile</span>
-                </a>
-            </nav>
+           <nav class="sidebar-nav">
+    <?php
+    // Determine active states for different pages
+    $isDashboard = ($current_action == 'dashboard');
+    $isTodaySchedule = ($current_action == 'appointments' && ($subAction == 'today' || !isset($_GET['sub'])));
+    $isAllAppointments = ($current_action == 'appointments' && $subAction == 'index');
+    $isSchedule = ($current_action == 'schedule');
+    $isPatients = ($current_action == 'patients');
+    $isReports = ($current_action == 'reports');
+    $isReviews = ($current_action == 'reviews');
+    $isProfile = ($current_action == 'profile');
+    ?>
+    
+    <a href="<?php echo SITE_URL; ?>doctor.php?action=dashboard" class="<?php echo $isDashboard ? 'active' : ''; ?>">
+        <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
+    </a>
+    
+    <a href="<?php echo SITE_URL; ?>doctor.php?action=appointments&sub=today" class="<?php echo $isTodaySchedule ? 'active' : ''; ?>">
+        <i class="fas fa-calendar-day"></i> <span>Today's Schedule</span>
+    </a>
+    
+    <a href="<?php echo SITE_URL; ?>doctor.php?action=appointments&sub=index" class="<?php echo $isAllAppointments ? 'active' : ''; ?>">
+        <i class="fas fa-calendar-week"></i> <span>All Appointments</span>
+    </a>
+    
+    <a href="<?php echo SITE_URL; ?>doctor.php?action=schedule" class="<?php echo $isSchedule ? 'active' : ''; ?>">
+        <i class="fas fa-clock"></i> <span>My Schedule</span>
+    </a>
+    
+    <a href="<?php echo SITE_URL; ?>doctor.php?action=patients" class="<?php echo $isPatients ? 'active' : ''; ?>">
+        <i class="fas fa-users"></i> <span>Patients</span>
+    </a>
+    
+    <a href="<?php echo SITE_URL; ?>doctor.php?action=reports" class="<?php echo $isReports ? 'active' : ''; ?>">
+        <i class="fas fa-chart-line"></i> <span>Reports</span>
+    </a>
+    
+    <a href="<?php echo SITE_URL; ?>doctor.php?action=reviews" class="<?php echo $isReviews ? 'active' : ''; ?>">
+        <i class="fas fa-star"></i> <span>Reviews</span>
+    </a>
+    
+    <a href="<?php echo SITE_URL; ?>doctor.php?action=profile" class="<?php echo $isProfile ? 'active' : ''; ?>">
+        <i class="fas fa-user-circle"></i> <span>My Profile</span>
+    </a>
+</nav>
             <div class="sidebar-footer">
                 <a href="<?php echo SITE_URL; ?>logout.php">
                     <i class="fas fa-sign-out-alt"></i> <span>Logout</span>

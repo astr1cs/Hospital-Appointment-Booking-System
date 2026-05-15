@@ -164,10 +164,15 @@ public function show($id) {
                    p.address,
                    p.emergency_contact_name, 
                    p.emergency_contact_phone, 
-                   p.medical_history_notes
+                   p.medical_history_notes,
+                   cn.symptoms, 
+                   cn.diagnosis, 
+                   cn.prescription, 
+                   cn.follow_up_date
             FROM appointments a
             JOIN users u ON a.patient_id = u.id
             LEFT JOIN patients p ON u.id = p.user_id
+            LEFT JOIN consultation_notes cn ON a.id = cn.appointment_id
             WHERE a.id = ? AND a.doctor_id = ?";
     $stmt = $this->db->prepare($sql);
     $stmt->bind_param("ii", $id, $userId);
@@ -179,6 +184,12 @@ public function show($id) {
         $this->redirect('doctor.php?action=appointments&sub=today');
         return;
     }
+    
+    // Set default values for consultation notes if null
+    $appointment['symptoms'] = $appointment['symptoms'] ?? '';
+    $appointment['diagnosis'] = $appointment['diagnosis'] ?? '';
+    $appointment['prescription'] = $appointment['prescription'] ?? '';
+    $appointment['follow_up_date'] = $appointment['follow_up_date'] ?? '';
     
     $data = [
         'title' => 'Appointment Details',
