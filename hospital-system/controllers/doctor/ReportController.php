@@ -146,5 +146,43 @@ class ReportController extends DoctorBaseController {
         
         $this->view('reports/stats', $data);
     }
+    // Follow-up appointments
+public function followups() {
+    $userId = $this->getUserId();
+    
+    // Get appointments with follow-up dates
+    $sql = "SELECT a.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
+                   cn.follow_up_date, cn.diagnosis, cn.prescription
+            FROM consultation_notes cn
+            JOIN appointments a ON cn.appointment_id = a.id
+            JOIN users u ON a.patient_id = u.id
+            WHERE a.doctor_id = ? AND cn.follow_up_date IS NOT NULL AND cn.follow_up_date >= CURDATE()
+            ORDER BY cn.follow_up_date ASC";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $followups = $stmt->get_result();
+    
+    // Get past follow-ups
+    $sqlPast = "SELECT a.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
+                       cn.follow_up_date, cn.diagnosis, cn.prescription
+                FROM consultation_notes cn
+                JOIN appointments a ON cn.appointment_id = a.id
+                JOIN users u ON a.patient_id = u.id
+                WHERE a.doctor_id = ? AND cn.follow_up_date IS NOT NULL AND cn.follow_up_date < CURDATE()
+                ORDER BY cn.follow_up_date DESC";
+    $stmt = $this->db->prepare($sqlPast);
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $pastFollowups = $stmt->get_result();
+    
+    $data = [
+        'title' => 'Follow-up Appointments',
+        'followups' => $followups,
+        'pastFollowups' => $pastFollowups
+    ];
+    
+    $this->view('reports/followups', $data);
+}
 }
 ?>
