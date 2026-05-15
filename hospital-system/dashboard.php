@@ -14,7 +14,7 @@ switch ($role) {
         header('Location: patient.php?action=dashboard');
         break;
     case 'doctor':
-        header('Location: doctor/dashboard.php');
+        header('Location: doctor.php?action=dashboard');
         break;
     case 'receptionist':
         header('Location: receptionist/dashboard.php');
