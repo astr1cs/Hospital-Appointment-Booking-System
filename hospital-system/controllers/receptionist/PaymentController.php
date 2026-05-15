@@ -107,31 +107,28 @@ class PaymentController extends ReceptionistBaseController {
 }
     
     // Print receipt
-    public function receipt($id) {
-        $sql = "SELECT b.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
-                       a.appointment_date, a.appointment_time, a.reason, d.name as doctor_name
-                FROM billing b
-                JOIN users u ON b.patient_id = u.id
-                JOIN appointments a ON b.appointment_id = a.id
-                JOIN users d ON a.doctor_id = d.id
-                WHERE b.id = ?";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bind_param("i", $id);
-        $stmt->execute();
-        $bill = $stmt->get_result()->fetch_assoc();
-        
-        if (!$bill) {
-            $_SESSION['error'] = 'Bill not found';
-            $this->redirect('receptionist.php?action=payments');
-            return;
-        }
-        
-        $data = [
-            'title' => 'Payment Receipt',
-            'bill' => $bill
-        ];
-        
-        $this->view('payments/receipt', $data);
+   // Print receipt (standalone - no layout)
+public function receipt($id) {
+    $sql = "SELECT b.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
+                   a.appointment_date, a.appointment_time, a.reason, d.name as doctor_name
+            FROM billing b
+            JOIN users u ON b.patient_id = u.id
+            JOIN appointments a ON b.appointment_id = a.id
+            JOIN users d ON a.doctor_id = d.id
+            WHERE b.id = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $bill = $stmt->get_result()->fetch_assoc();
+    
+    if (!$bill) {
+        echo "Bill not found";
+        return;
     }
+    
+    // Use standalone receipt view without layout
+    require_once 'views/receptionist/payments/receipt.php';
+    exit();
+}
 }
 ?>
