@@ -9,3 +9,5 @@
 
 **Doctor Module:**
 1. Check-in patient - Click "Check In" button sends XMLHttpRequest to `doctor.php?action=appointments&sub=checkin`, updates appointment status to "checked_in" and changes UI dynamically without page reload
+2. Update profile - Submit profile form sends XMLHttpRequest to `doctor.php?action=profile&sub=ajaxUpdate`, updates doctor information and updates header name dynamically without page reload
+3. Change password - Submit password form sends XMLHttpRequest to `doctor.php?action=profile&sub=changePassword`, validates and updates password with JSON response without page reload
