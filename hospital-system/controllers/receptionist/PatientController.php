@@ -40,7 +40,7 @@ class PatientController extends ReceptionistBaseController {
     }
     
     // View patient details
-    public function view($id) {
+   public function show($id) {
         $sql = "SELECT u.*, 
                        p.date_of_birth, p.blood_group, p.gender, p.address,
                        p.emergency_contact_name, p.emergency_contact_phone, p.medical_history_notes
