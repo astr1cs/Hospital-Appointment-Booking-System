@@ -363,6 +363,20 @@ public function getWeeklyAppointments($doctorId) {
     return $stmt->get_result();
 }
 
+// Get appointment for consultation
+public function getForConsultation($appointmentId, $doctorId) {
+    $sql = "SELECT a.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
+                   p.date_of_birth, p.blood_group, p.gender, p.medical_history_notes
+            FROM appointments a
+            JOIN users u ON a.patient_id = u.id
+            LEFT JOIN patients p ON u.id = p.user_id
+            WHERE a.id = ? AND a.doctor_id = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("ii", $appointmentId, $doctorId);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+}
+
 
 }
 ?>
