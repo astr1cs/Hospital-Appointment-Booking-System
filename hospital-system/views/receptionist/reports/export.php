@@ -141,22 +141,6 @@
         </tr>
     </table>
     
-    <?php
-    // Group appointments by doctor
-    $grouped = [];
-    $appointments->data_seek(0);
-    while ($row = $appointments->fetch_assoc()) {
-        $doctorId = $row['doctor_id'];
-        if (!isset($grouped[$doctorId])) {
-            $grouped[$doctorId] = [
-                'doctor_name' => $row['doctor_name'],
-                'appointments' => []
-            ];
-        }
-        $grouped[$doctorId]['appointments'][] = $row;
-    }
-    ?>
-    
     <?php foreach($grouped as $doctor): ?>
     <div class="doctor-section">
         <div class="doctor-title">Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></div>
