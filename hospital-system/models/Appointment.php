@@ -231,8 +231,22 @@ public function getTopSpecializations($limit = 5) {
 //Patient
 // Get available time slots for a doctor on a specific date
 public function getAvailableSlots($doctorId, $date) {
+    // Check if date is today and time is already past
+    $isToday = ($date == date('Y-m-d'));
+    $currentTime = date('H:i:s');
+    
     $dayOfWeek = date('l', strtotime($date));
     
+    // Check if doctor is on leave for this date
+    $sql = "SELECT id FROM leave_dates WHERE doctor_id = ? AND leave_date = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("is", $doctorId, $date);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        return []; // Doctor on leave
+    }
+    
+    // Get doctor's availability for this day
     $sql = "SELECT start_time, end_time, slot_duration_minutes 
             FROM doctor_availability 
             WHERE doctor_id = ? AND day_of_week = ? AND is_available = 1";
@@ -245,7 +259,7 @@ public function getAvailableSlots($doctorId, $date) {
         return [];
     }
     
-    // Get booked slots
+    // Get already booked slots for this date
     $sql = "SELECT appointment_time FROM appointments 
             WHERE doctor_id = ? AND appointment_date = ? 
             AND status NOT IN ('cancelled', 'no_show')";
@@ -271,10 +285,13 @@ public function getAvailableSlots($doctorId, $date) {
         $slotTime = $current->format('H:i:s');
         $isBooked = in_array($slotTime, $bookedSlots);
         
+        // For today, only show future slots
+        $isPastSlot = ($isToday && $slotTime < $currentTime);
+        
         $slots[] = [
             'time' => $current->format('h:i A'),
             'time_value' => $slotTime,
-            'available' => !$isBooked
+            'available' => (!$isBooked && !$isPastSlot)
         ];
         
         $current->add($interval);
@@ -323,6 +340,60 @@ public function book($patientId, $doctorId, $date, $time, $reason, $bookedBy = '
     }
     return false;
 }
+// Get today's appointments for a doctor
+public function getTodayAppointments($doctorId) {
+    $today = date('Y-m-d');
+    $sql = "SELECT a.*, p.name as patient_name, p.email as patient_email, p.phone as patient_phone,
+                   p.date_of_birth, p.blood_group, p.gender
+            FROM appointments a
+            JOIN users p ON a.patient_id = p.id
+            WHERE a.doctor_id = ? AND a.appointment_date = ?
+            ORDER BY a.appointment_time ASC";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("is", $doctorId, $today);
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
+// Update appointment status (for check-in)
+public function updateStatus($appointmentId, $status) {
+    $sql = "UPDATE appointments SET status = ? WHERE id = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("si", $status, $appointmentId);
+    return $stmt->execute();
+}
+
+// Get weekly appointments
+public function getWeeklyAppointments($doctorId) {
+    $startOfWeek = date('Y-m-d', strtotime('monday this week'));
+    $endOfWeek = date('Y-m-d', strtotime('sunday this week'));
+    
+    $sql = "SELECT a.*, p.name as patient_name, 
+                   DAYNAME(a.appointment_date) as day_name
+            FROM appointments a
+            JOIN users p ON a.patient_id = p.id
+            WHERE a.doctor_id = ? AND a.appointment_date BETWEEN ? AND ?
+            ORDER BY a.appointment_date ASC, a.appointment_time ASC";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("iss", $doctorId, $startOfWeek, $endOfWeek);
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
+// Get appointment for consultation
+public function getForConsultation($appointmentId, $doctorId) {
+    $sql = "SELECT a.*, u.name as patient_name, u.email as patient_email, u.phone as patient_phone,
+                   p.date_of_birth, p.blood_group, p.gender, p.medical_history_notes
+            FROM appointments a
+            JOIN users u ON a.patient_id = u.id
+            LEFT JOIN patients p ON u.id = p.user_id
+            WHERE a.id = ? AND a.doctor_id = ?";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bind_param("ii", $appointmentId, $doctorId);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc();
+}
+
 
 }
 ?>

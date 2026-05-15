@@ -6,7 +6,6 @@ require_once __DIR__ . '/../../models/Patient.php';
 
 class AppointmentController extends PatientBaseController {
     
-    // Show booking form
     public function book() {
         $doctorId = $_GET['doctor_id'] ?? null;
         
@@ -33,7 +32,6 @@ class AppointmentController extends PatientBaseController {
         $this->view('appointments/book', $data);
     }
     
-    // AJAX: Get available slots
     public function getSlots() {
         header('Content-Type: application/json');
         
@@ -51,7 +49,6 @@ class AppointmentController extends PatientBaseController {
         echo json_encode(['success' => true, 'slots' => $slots]);
     }
     
-    // Store appointment
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->redirect('patient.php?action=doctors');
@@ -64,14 +61,12 @@ class AppointmentController extends PatientBaseController {
         $reason = $_POST['reason'] ?? null;
         $dependentId = $_POST['dependent_id'] ?? null;
         
-        // Validate
         if (!$doctorId || !$date || !$time || !$reason) {
             $_SESSION['error'] = 'All fields are required';
             $this->redirect('patient.php?action=appointments&sub=book&doctor_id=' . $doctorId);
             return;
         }
         
-        // Check if slot is still available
         $appointmentModel = new Appointment();
         if (!$appointmentModel->isSlotAvailable($doctorId, $date, $time)) {
             $_SESSION['error'] = 'This time slot is no longer available. Please select another.';
@@ -79,7 +74,6 @@ class AppointmentController extends PatientBaseController {
             return;
         }
         
-        // Book appointment
         $patientId = $this->getUserId();
         if ($appointmentModel->book($patientId, $doctorId, $date, $time, $reason, 'patient', $dependentId)) {
             $_SESSION['success'] = 'Appointment booked successfully!';
@@ -90,11 +84,9 @@ class AppointmentController extends PatientBaseController {
         }
     }
     
-    // List appointments
     public function index() {
         $userId = $this->getUserId();
         
-        // Upcoming appointments
         $sql = "SELECT a.*, d.name as doctor_name, doc.specialization_id, s.name as specialization_name
                 FROM appointments a
                 JOIN users d ON a.doctor_id = d.id
@@ -107,7 +99,6 @@ class AppointmentController extends PatientBaseController {
         $stmt->execute();
         $upcoming = $stmt->get_result();
         
-        // Past appointments
         $sql = "SELECT a.*, d.name as doctor_name, doc.specialization_id, s.name as specialization_name
                 FROM appointments a
                 JOIN users d ON a.doctor_id = d.id
@@ -134,11 +125,9 @@ class AppointmentController extends PatientBaseController {
         $this->view('appointments/index', $data);
     }
     
-    // Cancel appointment
     public function cancel($id) {
         $userId = $this->getUserId();
         
-        // Check if appointment belongs to user and can be cancelled
         $sql = "SELECT appointment_date, appointment_time, status FROM appointments WHERE id = ? AND patient_id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->bind_param("ii", $id, $userId);
@@ -151,7 +140,6 @@ class AppointmentController extends PatientBaseController {
             return;
         }
         
-        // Check if already cancelled or completed
         if ($appointment['status'] == 'cancelled') {
             $_SESSION['error'] = 'Appointment already cancelled';
             $this->redirect('patient.php?action=appointments');
@@ -164,7 +152,6 @@ class AppointmentController extends PatientBaseController {
             return;
         }
         
-        // Check cancellation policy (2 hours before)
         $appointmentDateTime = new DateTime($appointment['appointment_date'] . ' ' . $appointment['appointment_time']);
         $now = new DateTime();
         $diff = $now->diff($appointmentDateTime);
@@ -176,7 +163,6 @@ class AppointmentController extends PatientBaseController {
             return;
         }
         
-        // Cancel appointment
         $sql = "UPDATE appointments SET status = 'cancelled' WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->bind_param("i", $id);
@@ -190,7 +176,6 @@ class AppointmentController extends PatientBaseController {
         $this->redirect('patient.php?action=appointments');
     }
     
-    // View appointment details (with consultation notes)
     public function show($id) {
         $userId = $this->getUserId();
         
@@ -222,4 +207,3 @@ class AppointmentController extends PatientBaseController {
         $this->view('appointments/view', $data);
     }
 }
-?>
