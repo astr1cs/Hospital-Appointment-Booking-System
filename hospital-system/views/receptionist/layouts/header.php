@@ -5,7 +5,18 @@ if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'receptionist')
 }
 
 $current_action = $_GET['action'] ?? 'dashboard';
+$subAction = $_GET['sub'] ?? '';
 $userName = $_SESSION['user_name'];
+
+// Determine active states
+$isDashboard = ($current_action == 'dashboard');
+$isTodaySchedule = ($current_action == 'appointments' && $subAction == 'today');
+$isWalkinBooking = ($current_action == 'appointments' && $subAction == 'book');
+$isWaitingQueue = ($current_action == 'appointments' && $subAction == 'queue');
+$isSearchPatients = ($current_action == 'patients' && $subAction == 'search');
+$isRegisterPatient = ($current_action == 'patients' && $subAction == 'register');
+$isPayments = ($current_action == 'payments');
+$isDailyReport = ($current_action == 'reports' && $subAction == 'daily');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,28 +37,28 @@ $userName = $_SESSION['user_name'];
             <h2><i class="fas fa-tty"></i> Reception Desk</h2>
         </div>
         <nav class="sidebar-nav">
-            <a href="<?php echo SITE_URL; ?>receptionist.php?action=dashboard" class="<?php echo $current_action == 'dashboard' ? 'active' : ''; ?>">
+            <a href="<?php echo SITE_URL; ?>receptionist.php?action=dashboard" class="<?php echo $isDashboard ? 'active' : ''; ?>">
                 <i class="fas fa-tachometer-alt"></i> <span>Dashboard</span>
             </a>
-            <a href="<?php echo SITE_URL; ?>receptionist.php?action=appointments&sub=today" class="<?php echo $current_action == 'appointments' ? 'active' : ''; ?>">
+            <a href="<?php echo SITE_URL; ?>receptionist.php?action=appointments&sub=today" class="<?php echo $isTodaySchedule ? 'active' : ''; ?>">
                 <i class="fas fa-calendar-day"></i> <span>Today's Schedule</span>
             </a>
-            <a href="<?php echo SITE_URL; ?>receptionist.php?action=appointments&sub=book" class="">
+            <a href="<?php echo SITE_URL; ?>receptionist.php?action=appointments&sub=book" class="<?php echo $isWalkinBooking ? 'active' : ''; ?>">
                 <i class="fas fa-plus-circle"></i> <span>Walk-in Booking</span>
             </a>
-            <a href="<?php echo SITE_URL; ?>receptionist.php?action=appointments&sub=queue" class="">
+            <a href="<?php echo SITE_URL; ?>receptionist.php?action=appointments&sub=queue" class="<?php echo $isWaitingQueue ? 'active' : ''; ?>">
                 <i class="fas fa-hourglass-half"></i> <span>Waiting Queue</span>
             </a>
-            <a href="<?php echo SITE_URL; ?>receptionist.php?action=patients&sub=search" class="<?php echo $current_action == 'patients' ? 'active' : ''; ?>">
+            <a href="<?php echo SITE_URL; ?>receptionist.php?action=patients&sub=search" class="<?php echo $isSearchPatients ? 'active' : ''; ?>">
                 <i class="fas fa-search"></i> <span>Search Patients</span>
             </a>
-            <a href="<?php echo SITE_URL; ?>receptionist.php?action=patients&sub=register" class="">
+            <a href="<?php echo SITE_URL; ?>receptionist.php?action=patients&sub=register" class="<?php echo $isRegisterPatient ? 'active' : ''; ?>">
                 <i class="fas fa-user-plus"></i> <span>Register Patient</span>
             </a>
-            <a href="<?php echo SITE_URL; ?>receptionist.php?action=payments" class="<?php echo $current_action == 'payments' ? 'active' : ''; ?>">
+            <a href="<?php echo SITE_URL; ?>receptionist.php?action=payments" class="<?php echo $isPayments ? 'active' : ''; ?>">
                 <i class="fas fa-dollar-sign"></i> <span>Payments</span>
             </a>
-            <a href="<?php echo SITE_URL; ?>receptionist.php?action=reports&sub=daily" class="<?php echo $current_action == 'reports' ? 'active' : ''; ?>">
+            <a href="<?php echo SITE_URL; ?>receptionist.php?action=reports&sub=daily" class="<?php echo $isDailyReport ? 'active' : ''; ?>">
                 <i class="fas fa-chart-bar"></i> <span>Daily Report</span>
             </a>
         </nav>
